@@ -1,0 +1,158 @@
+@use "/styles/value" as *;
+
+$brd-style: 3px solid Color();
+
+#Frame {
+  @include GridFrame();
+  @include FullDiv();
+  overflow: hidden;
+
+  & {
+    .Edit {
+      transform: none;
+    }
+
+    .Copy {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  &.copyColor {
+    .Edit {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+
+    .Copy {
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  .Edit {
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+
+    .colorBar {
+      display: flex;
+      gap: 5px;
+      padding: 5px;
+
+      .button {
+        border: $brd-style;
+        @include FlexCenter2();
+
+        svg {
+          fill: Color();
+        }
+
+        &:hover {
+
+          *,
+          & {
+            transition: none;
+          }
+        }
+      }
+
+      .color {
+        width: 30px;
+        background-color: Color();
+        @include GridFrame();
+        transition: none;
+
+        input {
+          opacity: 0;
+        }
+      }
+
+      input {
+        flex-grow: 1;
+        border: $brd-style;
+        background-color: #0000;
+        padding: 5px 15px;
+        outline: none;
+
+        &:hover,
+        &:focus {
+          padding: 5px 10px;
+        }
+      }
+    }
+
+    .Title {
+      @include FlexCenter2();
+      background: Color(.2);
+      padding: 10px;
+
+      span {
+        font-size: 20px;
+        color: Color();
+      }
+    }
+
+    .List {
+      overflow: auto;
+      padding: 10px 0;
+    }
+
+    .Input {
+      background-color: Color(.1);
+    }
+  }
+
+  .Copy {
+    padding: 5px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    .color {
+      @include GridFrame();
+      background-color: #000;
+
+      * {
+        pointer-events: none;
+      }
+
+      .bg {
+        z-index: 1;
+        border: $brd-style;
+        border-width: 2px;
+      }
+
+      .text {
+        z-index: 2;
+        @include FlexCenter2();
+        padding: 10px;
+
+        span {
+          opacity: 0;
+          font-size: 15px;
+        }
+      }
+
+      &:hover,
+      &:active {
+
+        *,
+        & {
+          transition: none;
+        }
+
+        .bg {
+          filter: brightness(.6);
+        }
+
+        .text {
+          span {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+}
