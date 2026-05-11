@@ -21,14 +21,14 @@ export interface HeadSettingProps {
 const HeadSetting: NextPage<HeadSettingProps> = (prop) => {
   const router = useRouter();
   const siteName = "KIASENOLO";
-  const domain = "https://noting.kiasenolo";
+  const domain = "https://public-project-kilo-things.vercel.app";
 
   const fullTitle = prop.title ?? siteName;
   const description = prop.ogp?.description ?? prop.description ?? "沒寫描述捏.w.";
 
   const image = prop.ogp?.image
     ? (prop.ogp.image.startsWith('http') ? prop.ogp.image : `${domain}${prop.ogp.image}`)
-    : `${domain}/_SYSTEM/og-image.png`;
+    : `${domain}/og-image.png`;
 
   const url = prop.ogp?.url ?? `${domain}${router.asPath}`;
   const color = prop.ogp?.color ?? "#aff";
@@ -43,14 +43,14 @@ const HeadSetting: NextPage<HeadSettingProps> = (prop) => {
       <link rel="icon" href={prop.icon ?? "/favicon.svg"} sizes="any" />
       <link rel="canonical" href={url} />
 
-      {/* Robots */}
+      {/* --- Robots Control --- */}
       {prop.noIndex ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (
         <meta name="robots" content="index, follow" />
       )}
 
-      {/* Open Graph / Facebook / Discord */}
+      {/* --- Open Graph / Facebook / Discord --- */}
       <meta property="og:type" content={prop.ogp?.type ?? "website"} />
       <meta property="og:url" content={url} />
       <meta property="og:title" content={prop.ogp?.title ?? fullTitle} />
@@ -58,13 +58,13 @@ const HeadSetting: NextPage<HeadSettingProps> = (prop) => {
       <meta property="og:image" content={image} />
       <meta property="og:site_name" content={siteName} />
 
-      {/* Twitter / X Preview */}
+      {/* --- Twitter / X Preview --- */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={prop.ogp?.title ?? fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
 
-      {/* Theme Color  */}
+      {/* --- Theme Color / UI Branding --- */}
       <meta name="theme-color" content={color} />
       <meta name="msapplication-TileColor" content={color} />
     </Head>
