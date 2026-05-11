@@ -1,0 +1,277 @@
+@use "/styles/value" as *;
+
+#Frame {
+  overflow: hidden;
+  @include FullDiv();
+  @include GridFrame(true);
+
+  >.Background {
+    z-index: 1;
+    @include GridFrame(true);
+
+    .Image {
+      z-index: 1;
+      @include BgCntr();
+      transition: none;
+    }
+
+    .Shadow {
+      z-index: 2;
+      background: rgba(0, 0, 0, 0);
+      background: radial-gradient(circle, rgba(0, 0, 0, .2) 0%, rgba(0, 0, 0, 0.5) 100%);
+    }
+  }
+
+  >.Widget {
+    z-index: 2;
+    @include GridFrame(true);
+
+    >.Clock {
+      filter: drop-shadow(0 3px 2px Color(.05, .5));
+
+      span,
+      input {
+        color: LightColor(0);
+        text-align: center;
+        width: 90%;
+      }
+
+      >span {
+        @include Freedom();
+        transform: translate(-50%, 0);
+        left: 50%;
+        top: 10%;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+
+        >.Time {
+          font-size: 125px;
+          font-weight: 500;
+          letter-spacing: 5px;
+        }
+
+        >.Date {
+          font-size: 25px;
+          font-weight: 500;
+          transform: translateY(-30px);
+        }
+
+        >.CustomText {
+          font-size: 20px;
+          transform: translateY(-40px);
+          font-weight: 500;
+          background-color: #0000;
+          outline: none;
+          border: none;
+          border-radius: 5px;
+          display: block;
+
+          &:hover {
+            background-color: Color(.2);
+          }
+
+          &:focus {
+            background-color: Color(.1);
+          }
+
+          &[readonly] {
+
+            &:hover,
+            &:focus {
+              background-color: #0000;
+            }
+          }
+
+          &[hide-it="hide"] {
+            opacity: 0;
+            pointer-events: none
+          }
+        }
+      }
+    }
+
+    >.InformationBlock {
+      @include GridFrame(true);
+
+      >.Blocks {
+        $size: 120px;
+        @include Freedom();
+        left: 50%;
+        bottom: 0%;
+        display: flex;
+        width: 90%;
+        height: $size;
+        align-items: stretch;
+        flex-direction: row;
+        justify-content: center;
+
+        >div {
+          width: $size;
+          background-color: Color(.3, .6);
+          backdrop-filter: $blur-effect;
+          border-radius: 10px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+
+          >.Text {
+            width: 100%;
+            text-align: center;
+            @include Freedom();
+            transform: translate(-50%, 0%);
+            left: 50%;
+            border-radius: 10px;
+            top: 7%;
+            height: 5px;
+            letter-spacing: 1px;
+            font-size: 15px;
+            color: Color();
+            font-weight: bold;
+          }
+
+          >.Icon {
+            fill: Color();
+            @include GridFrame(true);
+          }
+
+          >.Bar {
+            @include Freedom();
+            transform: translate(-50%, -100%);
+            left: 50%;
+            border-radius: 10px;
+            bottom: 3%;
+            width: 80%;
+            height: 10px;
+            background-color: Color(.5, .5);
+            overflow: hidden;
+
+            >.Inner {
+              background-color: Color();
+              border-radius: 10px;
+              height: 100%;
+            }
+          }
+        }
+
+        >.Battery {
+          &[hide-it="hide"] {
+            transform: scale(.8);
+            opacity: 0;
+          }
+
+          .Icon {
+            .Charging {
+              transform: scale(.8);
+              opacity: 0;
+            }
+
+            .Power,
+            .Error {
+              opacity: 0;
+            }
+          }
+
+          &.Char {
+            background-color: Color(.5, .5);
+
+            .Icon {
+              .Battery {
+                transform: scale(.8);
+                opacity: 0;
+              }
+
+              .Charging {
+                transform: none;
+                opacity: 1;
+              }
+            }
+
+            .Bar {
+              background-color: Color(.6, .8);
+            }
+          }
+
+          &.Infi {
+            .Text {
+              opacity: 0;
+            }
+
+            .Icon {
+              .Power {
+                opacity: 1;
+              }
+
+              .Charging,
+              .Battery {
+                opacity: 0;
+              }
+            }
+
+            .Bar {
+              opacity: 0;
+            }
+          }
+
+          &.Error {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+
+  >.PowerIn {
+    &[hide-it="hide"] {
+      opacity: 0 !important;
+    }
+
+    *,
+    & {
+      pointer-events: none;
+    }
+
+    opacity: 0;
+    overflow: hidden;
+    z-index: 3;
+    mix-blend-mode: overlay;
+    transition: cubic-bezier(0, .5, 0, 1) .5s;
+
+    .Cer {
+      aspect-ratio: 1;
+      height: 0vh;
+      opacity: 1;
+      background-color: #ffffff9f;
+      border-radius: 50%;
+      @include Freedom();
+      top: calc(100% - 120px);
+      left: 50%;
+      filter: blur(30px);
+      transition: cubic-bezier(1, 0, 0, 1) 1s;
+    }
+
+    .cBorder {
+      background-color: #fff0;
+      border: 0vh solid #fff;
+    }
+
+    &.Char {
+      opacity: .5;
+      transition: ease 1.5s;
+
+      .Cer {
+        height: 330vh;
+        opacity: 0;
+        transition:
+          border cubic-bezier(0, .54, 0, 1) 1s 0s,
+          height cubic-bezier(.55, .15, 0, 1) 3s .2s,
+          opacity cubic-bezier(.27, .2, .37, 1.01) 4s .2s;
+      }
+
+      .cBorder {
+        background-color: #fff0;
+        border: 10vh solid #fff;
+      }
+    }
+  }
+}
