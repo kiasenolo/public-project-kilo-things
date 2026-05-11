@@ -9,7 +9,7 @@ interface Color {
 export const TCFTI_List: Color[] = [
   {
     id: "104172324",
-    name:"經典配色",
+    name: "經典配色",
     colors: [
       "#feeab5",
       "#fed89f",
@@ -31,7 +31,7 @@ export const TCFTI_List: Color[] = [
   },
   {
     id: "92142600",
-    name:"帶點科技感的淺藍色",
+    name: "帶點科技感的淺藍色",
     colors: [
       "#c5caca",
       "#a7bbb7",
@@ -51,7 +51,7 @@ export const TCFTI_List: Color[] = [
   },
   {
     id: "87377769",
-    name:"深海裏微微的青綠色（？",
+    name: "深海裏微微的青綠色（？",
     colors: [
       "#72ada2",
       "#00ffb4",
@@ -73,7 +73,7 @@ export const TCFTI_List: Color[] = [
   },
   {
     id: "109556597",
-    name:"你住在樹裏面的木頭色",
+    name: "你住在樹裏面的木頭色",
     colors: [
       "#F2ECC1",
       "#C2B390",

@@ -10,6 +10,7 @@ import colormgr from '@/data/module/color'
 import { _app, newInput } from '@/pages/_app';
 import { isArray } from 'tone';
 import { TCFTI_List } from './TCFTI';
+import { toolsColor } from '..';
 
 const defaultList = ["#ffffff", "#ff0000", "#00ff00", "#0000ff", "#ff00ff", "#00ffff", "#ffff00"];
 const gayList = ["#ff0000", "#ff8000", "#ffc400", "#c2ff00", "#41ff00", "#00ffa2", "#00b5ff", "#0045ff", "#8d00ff", "#eb00ff", "#ff00b9"];
@@ -250,8 +251,8 @@ export default function Palette() {
     <>
       <HeadSetting title='調色板' ogp={{
         title: "Color Palette",
-        color: "#6fffff",
-        description: "一個神奇的調色板"
+        description: "一個神奇的調色板",
+        color: toolsColor,
       }} />
       <Return hide={true} tips='<=\\ 召喚出各種的顔色！ [ /tool ]' />
       <div

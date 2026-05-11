@@ -11,6 +11,8 @@ const fullInfo =
 是可以考慮寫文檔 但我懶惰
 `
 
+export const toolsColor = "#363636"
+
 interface Props {
   items: ListItemData[]
 }
@@ -26,6 +28,12 @@ const ListPage: NextPage<Props> = ({ items }) => {
         backBtn: {
           hoverTips: "<=\\\\ 學會自給自足 也是一件很棒的事情啊 對吧？ [ root ]",
           href: "/",
+        },
+        headSetting: {
+          ogp: {
+            description: "自己寫的一些小工具 就 不一定好用",
+            color: toolsColor
+          }
         }
       }}
     />

@@ -3,6 +3,7 @@ import style from "./style.module.scss"
 import KMS from "@/data/components/KiloDown"
 import Return from '@/data/components/Return'
 import HeadSetting from '@/data/components/HeadSetting'
+import { toolsColor } from '..'
 
 interface KeyType {
   ctrlKey: boolean
@@ -59,7 +60,11 @@ export default function Markdown() {
 
   return (
     <>
-      <HeadSetting title={`按鍵資訊 | ${eventLock ? "已鎖定瀏覽器事件" : "未鎖定瀏覽器事件"}`} />
+      <HeadSetting title={`按鍵資訊 | ${eventLock ? "已鎖定瀏覽器事件" : "未鎖定瀏覽器事件"}`} ogp={{
+        title: "按鍵資訊",
+        description: "寫網頁嘛 然後寫快捷鍵嘛 挺好",
+        color: toolsColor,
+      }} />
       <Return hide={true} tips='<=\\ 記不起來啊.... [ /tool ]' />
       <div id={style["Bar"]}>
         <div className={style["inner"]} style={{ clipPath: `polygon(0 0, ${bar}% 0, ${bar}% 100%, 0% 100%)` }}>

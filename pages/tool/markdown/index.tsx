@@ -8,6 +8,7 @@ import CustomMarkdown from '@/data/components/CustomMarkdown';
 import Monaco from '@monaco-editor/react'
 import useLocalStorage from '@/data/module/use/LocalStorage';
 import ReactMarkdown from 'react-markdown';
+import { toolsColor } from '..';
 
 const textList = [
   "講實話 Monaco的編輯器真的 當初那麽一用\n整個人爽了",
@@ -140,6 +141,11 @@ export function Markdown({ type }: MarkdownProp) {
 
   return (
     <>
+      <HeadSetting title='Markdown預覽' ogp={{
+        title: type === "kilo" ? "Markdown預覽 KILO Ver." : "Markdown預覽",
+        description: type === "kilo" ? "預覽markdown的神奇小東西 但全都是我的元件" : "預覽markdown的神奇小東西",
+        color: toolsColor,
+      }} />
       <HeadSetting title='Markdown預覽' />
       <FileDrop onEvent={(e) => {
         const file = e[0]

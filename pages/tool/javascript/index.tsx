@@ -11,6 +11,7 @@ import sha1 from 'sha1';
 import { sha224, sha256 } from 'js-sha256';
 import useLocalStorage from '@/data/module/use/LocalStorage';
 import * as ts from 'typescript';
+import { toolsColor } from '..';
 
 const TextList = [
   "// 20250626的更新\n`md5: ${md5(\"被md5抽過\")} \n sha1: ${sha1(\"被sha1抽過\")} \n sha224: ${sha224(\"被sha224抽過\")} \n sha256: ${sha256(\"被sha256抽過\")}`",
@@ -252,8 +253,11 @@ export default function Javascript() {
 
   return (
     <>
-      <HeadSetting title='TypeScript 計算機' />
-
+      <HeadSetting title='TypeScript 計算機' ogp={{
+        title: "TypeScript 計算機",
+        description: "反正 有些人就喜歡用JS算數學嘛",
+        color: toolsColor,
+      }} />
       <FileDrop onEvent={(e) => {
         const file = e[0]
         if (file) {

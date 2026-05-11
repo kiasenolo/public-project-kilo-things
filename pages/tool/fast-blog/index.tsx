@@ -10,6 +10,7 @@ import KD from '@/data/components/KiloDown';
 import Monaco from '@monaco-editor/react'
 import HeadSetting from '@/data/components/HeadSetting';
 import { languageList, lang, languageListType } from './langs/_languageList';
+import { toolsColor } from '..';
 
 function toRandomText(input: string, language: string): string {
   const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -1240,7 +1241,11 @@ export default function () {
       if (infoStatus) return `${dTitle} // ${save.blogList[info]?.title}`
       else if (editMode) return `${dTitle} || ${save.blogList[nowEdit]?.title}`
       else return dTitle
-    })()} />
+    })()} ogp={{
+      title: "速寫Blog",
+      description: "這個東西是針對我自己的blogSystem開發的\n一般人可能用不太到 但 把他當作一個單純寫日記的東西也不錯",
+      color: toolsColor,
+    }} />
 
     <div
       id={style["App"]}

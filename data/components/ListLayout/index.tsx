@@ -1,5 +1,5 @@
-import React, { JSX } from 'react'
-import HeadSetting from '@/data/components/HeadSetting'
+import React from 'react'
+import HeadSetting, { HeadSettingProps } from '@/data/components/HeadSetting'
 import ScrollFrame from '@/data/components/ScrollFrame'
 import ScrollFrameButton from '@/data/components/ScrollFrameButton'
 
@@ -17,6 +17,7 @@ interface LayoutConfig {
     href: string
     hoverTips: string
   }
+  headSetting?: HeadSettingProps
 }
 
 interface ListLayoutProps {
@@ -30,7 +31,7 @@ const ListLayout: React.FC<ListLayoutProps> = ({ items, config }) => {
 
   return (
     <>
-      <HeadSetting title={config.title} />
+      <HeadSetting title={config.title} {...config.headSetting} />
 
       <ScrollFrame
         button={{
