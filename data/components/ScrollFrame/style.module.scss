@@ -1,0 +1,180 @@
+@use "/styles/value" as *;
+
+$height: 50px;
+
+.root {
+  &.blur {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+
+    .background {
+      filter: none;
+    }
+
+    .ScrollFrameButton {
+      transition: .3s ease-in;
+
+      &:nth-child(odd) {
+        transform: translateX(110%);
+      }
+
+      &:nth-child(even) {
+        transform: translateX(-110%);
+      }
+    }
+  }
+
+  .background {
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: fixed;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(.5);
+  }
+
+  .bar {
+    z-index: 10;
+    pointer-events: none;
+    top: 0;
+    width: 100%;
+    position: fixed;
+
+    &.blur {
+      transition: ease-out .3s;
+      transform: translateY(-150%);
+      pointer-events: none;
+    }
+
+    >div {
+      &:hover {
+        box-shadow: 0 0 10px Color(.06, .8);
+      }
+
+      pointer-events: all;
+      height: $height;
+      backdrop-filter: $blur-effect;
+      background-color: Color(.2, .5);
+      margin: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 30px Color(.06, .5);
+
+      display: grid;
+      grid-template-columns: auto 1fr;
+      overflow: hidden;
+
+      .link {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: Color(.2, .5);
+        $padding: 50px;
+        transform: translate(-20px);
+        padding-left: $padding;
+        padding-right: $padding;
+        clip-path: polygon(0 0, 100% 0%, 90% 100%, 0% 100%);
+      }
+
+      .link:hover {
+        transform: translate(-10px);
+        background-color: Color(.5, .7);
+      }
+
+      .link:active {
+        transform: none;
+        background-color: Color(.1, .5);
+      }
+
+      .title {
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 25px;
+
+        >a {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    &[Non-Back-Button] {
+      >div {
+        @include FlexCenter();
+      }
+    }
+
+  }
+
+  .main {
+    z-index: 2;
+    font-size: 20px;
+    position: absolute;
+    width: calc(100% - 20px);
+    padding: 10px;
+    transform: translateY($height + 10px);
+    line-height: 30px;
+
+    .ScrollFrameButton {
+      display: block;
+      box-shadow: inset 0 0 5px #000;
+      background-color: Color(.1);
+      margin: 20px 0;
+      border: 2px solid Color(.2);
+      padding: 10px 20px;
+      border-radius: 10px;
+
+      .name {
+        font-size: 30px;
+
+        &:hover {
+          text-shadow: 0 0 10px Color();
+        }
+      }
+
+      .tips {
+        margin-top: 5px;
+        font-size: 20px;
+
+        p {
+          margin: 0;
+        }
+      }
+
+      &:hover {
+        box-shadow: inset 0 0 10px Color(), 0 0 10px Color();
+
+        * {
+          color: Color();
+        }
+
+        background-color: Color(.2);
+        border: 2px solid Color();
+      }
+    }
+
+    &:not([is-div]) {
+      img {
+        margin: 10px;
+        border-radius: 5px;
+        max-width: 50vw;
+        max-height: 50vh;
+        position: relative;
+      }
+    }
+  }
+
+  .content {
+    &.blur {
+      transition: .5s ease-out;
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+}

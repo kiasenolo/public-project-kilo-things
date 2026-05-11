@@ -1,0 +1,46 @@
+@use "/styles/value" as *;
+
+#Return {
+  z-index: 1000000000;
+  width: 100px;
+  height: 100px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(0 0, 0% 100%, 100% 0);
+  background-color: Color(.1);
+  fill: LightColor(.5);
+
+  svg {
+    transform: scale(1.8) translate(-10%, -10%);
+  }
+
+  &:hover {
+    background-color: Color(.2);
+
+    svg {
+      transform: scale(2) translate(-20%, -20%);
+      fill: Color();
+    }
+  }
+
+  &:active {
+    background-color: Color(.2);
+
+    svg {
+      transform: scale(1.7) translate(-20%, -20%);
+      fill: Color(.3);
+    }
+  }
+
+  &.hide {
+    opacity: 0;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}

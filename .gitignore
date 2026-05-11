@@ -1,0 +1,14 @@
+# 套件
+**/node_modules/**
+
+# 編譯後產物
+.next
+
+# 記錄檔
+.log
+
+# 我們居然會有緩存這種東西 太抽象了
+.caches
+
+# 生成器生出來的東西
+.api.generater

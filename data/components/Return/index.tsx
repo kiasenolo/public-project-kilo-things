@@ -1,0 +1,20 @@
+import type { NextPage } from 'next';
+import Link from 'next/link';
+import style from './style.module.scss';
+
+export interface ReturnProps {
+  hide?: boolean
+  tips?: string
+}
+
+const Return: NextPage<ReturnProps> = (prop) => {
+  return (
+    <Link href="./" legacyBehavior>
+      <a id={style["Return"]} className={prop.hide ? style["hide"] : undefined} hover-tips={prop.tips || "回去"}>
+        <svg xmlns="http://www.w3.org/2000/svg" height="40" width="40"><path d="m22.375 29-8.083-8.042q-.209-.25-.292-.479-.083-.229-.083-.521 0-.25.083-.5t.292-.458l8.083-8.083q.417-.417 1-.417t1 .417q.375.416.375 1 0 .583-.417 1l-7.041 7.041 7.083 7.084q.375.416.375.979 0 .562-.375.979-.417.417-1.021.417-.604 0-.979-.417Z" /></svg>
+      </a>
+    </Link>
+  )
+}
+
+export default Return

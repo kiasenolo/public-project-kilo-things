@@ -1,0 +1,238 @@
+@use "/styles/value" as *;
+
+.Explorer {
+  background-color: Color(.02, .5);
+  $cool-transition: .5s cubic-bezier(.5, 0, 1, 0) 0s,
+    backdrop-filter .4s ease-in-out .1s;
+  z-index: 5;
+  background-color: Color(.02, .5);
+  overflow: hidden;
+  transform: translateX();
+
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  /* ==================== CLIP - LINE ==================== */
+
+  svg {
+    fill: Color();
+  }
+
+  * {
+    color: Color();
+  }
+
+  >.Dir {
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    overflow: hidden;
+
+    button {
+      border: none;
+      background-color: Color(.08, .5);
+      padding: 5px 15px;
+      text-decoration: none;
+      font-size: 18px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-align: left;
+      white-space: nowrap;
+      text-shadow: none;
+
+      &:hover,
+      &:active {
+        background-color: Color();
+        color: #000;
+
+        *,
+        & {
+          transition: none;
+        }
+
+        svg {
+          fill: #000;
+        }
+      }
+
+      &:active {
+        background-color: Color(.5);
+        color: Color(.8);
+
+        svg {
+          fill: Color(.8);
+        }
+      }
+
+      &:disabled {
+        pointer-events: none;
+        opacity: .5;
+      }
+    }
+
+    >.Buttons,
+    >.ViewMode,
+    >.Dir {
+      display: flex;
+      gap: 10px;
+    }
+
+    >.Buttons,
+    >.ViewMode {
+      button {
+        display: flex;
+        @include FlexCenter();
+      }
+    }
+
+    >.Dir {
+      &::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+      }
+
+      flex-grow: 1;
+      background-color: Color(.1, .5);
+      overflow: auto;
+
+      >span {
+        display: flex;
+      }
+
+      button {
+        padding: 5px 20px;
+        outline: none;
+        border: none;
+      }
+    }
+  }
+
+  >.ContentArea {
+    @include GridFrame();
+    overflow: hidden;
+    padding: 15px;
+    padding-top: 0;
+
+    >.MenuFrame {
+      overflow: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      justify-content: flex-start;
+      gap: 10px;
+
+      * {
+        color: Color();
+      }
+
+      .Button {
+        border: none;
+        background-color: Color(.1, .5);
+        border: 3px solid #0000;
+        overflow: hidden;
+        padding: 5px;
+        @include GridFrame();
+        transition: all DefaultTransition(), width none, height none, min-width none, min-height none;
+
+        * {
+          transition: none;
+        }
+
+        .icon {
+          @include GridFrame();
+          transform: translateY(-10px) scale(.7);
+          z-index: 1;
+
+          .img {
+            width: 90px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+          }
+        }
+
+        .lable {
+          z-index: 2;
+          display: flex;
+          overflow: hidden;
+          align-items: flex-end;
+          justify-content: center;
+
+          span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 5px;
+          }
+        }
+
+        &:hover,
+        &.sel {
+          transition: none;
+        }
+
+        &:hover {
+          border: 3px solid Color(1, .5);
+        }
+
+        &.sel {
+          border: 3px solid Color();
+        }
+      }
+
+      &.left,
+      &.right {
+        opacity: 0;
+        transition: none !important;
+      }
+
+      &.left {
+        transform: translateX(-50px);
+      }
+
+      &.right {
+        transform: translateX(50px);
+      }
+    }
+
+    &.GridView {
+      .MenuFrame {
+        .Button {
+          width: 120px;
+          height: 130px;
+        }
+      }
+    }
+
+    &.ListView {
+      .MenuFrame {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+
+        .Button {
+          display: flex;
+          align-items: center;
+          min-width: 120px;
+          min-height: 60px;
+          padding: 10px;
+          gap: 20px;
+
+          .icon {
+            transform: none;
+            width: 40px;
+
+            .img {
+              width: 40px;
+            }
+          }
+
+          .lable {
+            justify-content: flex-start;
+            font-size: 18px;
+          }
+        }
+      }
+    }
+  }
+}
