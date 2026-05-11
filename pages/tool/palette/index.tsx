@@ -248,7 +248,11 @@ export default function Palette() {
 
   return (
     <>
-      <HeadSetting title='調色板' />
+      <HeadSetting title='調色板' ogp={{
+        title: "Color Palette",
+        color: "#6fffff",
+        description: "一個神奇的調色板"
+      }} />
       <Return hide={true} tips='<=\\ 召喚出各種的顔色！ [ /tool ]' />
       <div
         id={style["Frame"]}
