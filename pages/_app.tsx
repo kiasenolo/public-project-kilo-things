@@ -4,11 +4,11 @@ import HoverTips from "@/data/components/HoverTips"
 import { Dispatch, ReactNode, RefObject, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import colormgr from '@/data/module/color'
 import functions from '@/data/module/functions'
-import HeadSetting from '@/data/components/HeadSetting'
 import WebEffect from '@/data/module/WebEffect'
 
 import style from './_app.module.scss'
 import consoleStyle from './_app.styles/console.module.scss'
+import Head from 'next/head'
 
 export let _powerSaveingMode = true
 export let _setPowerSaveingMode: Dispatch<SetStateAction<boolean>> = () => { }
@@ -2085,7 +2085,11 @@ function MyApp({ Component, pageProps }: AppProps) {
     <>
       <Components.SVGFilters />
 
-      <HeadSetting />
+      <Head>
+        <title>{"KIASENOLO"}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.svg" sizes="any" />
+      </Head>
       <div
         style={{ zoom: appScale + "%" }}
         id={style["KIASE_APP"]}
