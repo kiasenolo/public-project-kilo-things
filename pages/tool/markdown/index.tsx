@@ -1,194 +1,319 @@
-import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import HeadSetting from "@/data/components/HeadSetting"
+import functions from "@/data/module/functions"
+import useLocalStorage from "@/data/module/use/LocalStorage"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { toolsColor } from ".."
+import FileDrop from "@/data/components/FileDrop"
 import style from "./style.module.scss"
-import functions from '@/data/module/functions';
-import FileDrop from '@/data/components/FileDrop';
-import HeadSetting from '@/data/components/HeadSetting';
-import CustomMarkdown from '@/data/components/CustomMarkdown';
-import Monaco from '@monaco-editor/react'
-import useLocalStorage from '@/data/module/use/LocalStorage';
-import ReactMarkdown from 'react-markdown';
-import { toolsColor } from '..';
-
-const textList = [
-  "講實話 Monaco的編輯器真的 當初那麽一用\n整個人爽了",
-  "你可能不知道 但這個樣式套件 他叫KiloDown\n~~所以我可以給他做個KIASENOLO 然後箭頭向下的LOGO~~",
-  "有時候 寫程式使我快樂",
-  "抽象主義派程式設計師",
-  "Monaco編輯器賽高！",
-  "ReactMarkdown賽高！",
-  "我要跟React的開發者結婚（？？？？？？",
-  "啊....我叫KILO 不叫可樂 更不叫kero .w.\n不是哥 如果你真想中文的話 凱儸啊.....\n我很討厭別人叫我可樂 請基本的尊重一下",
-  "你知道嗎 其實KOLENOSA在設定上 是帥大叔哦\n然後因爲我不知道我的正太音要叫什麽名字\n所以我就把KOSA這個名字用了下去\n~~KOSA被黑的最慘的一次~~",
-  "你知道嗎 其實偶爾出門走走 也挺好的 你説....對吧owo?",
-  "KIASENOLO x KOLENOSA",
-  "Project KIASENOLO的主旨就是\n我爽awa",
-  "是説這個隨機文字.....可能會有人覺得我在抄Minecraft......",
-  "我有個朋友叫AD 他跟我説 有人給他取名叫交直電\nDC - 直流電\nAC - 交流電\n.......~~我怎麽記得是我取的~~",
-]
-
-const defaultText: string = ""
-
-let nowContent = defaultText
-
-let tmpText = ""
-
-const ele = {
-  save: function () {
-    return document.getElementById(style["Save"])!
-  },
-  import: function () {
-    return document.getElementById(style["Import"])!
-  },
-  fileName: function () {
-    return document.getElementById("FileName")! as HTMLInputElement
-  }
-}
+import ReactMarkdown from "react-markdown"
+import CustomMarkdown from "@/data/components/CustomMarkdown"
+import Monaco, { OnMount } from '@monaco-editor/react'
+import clsx from "clsx"
+import Link from "next/link"
+import { defText } from "./defText"
+import { Position, Selection } from "monaco-editor"
+import { cloneDeep } from "lodash"
 
 type MarkdownProp = {
-  type: "normal" | "kilo"
+  type?: "normal" | "kilo"
 }
 
-export function Markdown({ type }: MarkdownProp) {
+type EditorStatus = {
+  scroll?: {
+    scrollLeft: number;
+    scrollTop: number;
+  };
+  selections?: Selection[];
+};
 
-  const [ctn, chgCtn] = useLocalStorage<string>(
-    type === "normal" ? 'tool/markdown:content' : 'tool/markdown-kilo:content',
-    defaultText,
+export function Markdown({ type = "normal" }: MarkdownProp) {
+  const [storeContent, setStoreContent] = useLocalStorage(
+    type === "normal" ? 'tool/markdown/content' : 'tool/markdown-kilo/content',
+    "",
+  )
+
+  const [editerStatus, setEditerStatus] = useLocalStorage<EditorStatus | undefined>(
+    type === "normal" ? 'tool/markdown/editorStatus' : 'tool/markdown-kilo/editorStatus',
+    undefined
   );
 
-  const [ingSaveKey, setSaveKeySta] = useState<boolean>(false);
+  const [storeScrollPos, setStoreScrollPos] = useLocalStorage<[number, number]>(
+    type === "normal" ? 'tool/markdown/scrollPos' : 'tool/markdown-kilo/scrollPos',
+    [0, 0]
+  )
 
-  const saveSystem = {
-    save: function () {
-      ele.save().classList.add(style["show"])
-      ele.fileName().focus()
-    },
-    no: function () {
-      ele.save().classList.remove(style["show"])
-    },
-    yes: function () {
-      functions.download(nowContent, `${ele.fileName().value || "untitled"}.md`)
-      saveSystem.no()
-    },
-  }
-
-  const importSystem = {
-    import: function () {
-      ele.import().classList.add(style["show"])
-    },
-    no: function () {
-      ele.import().classList.remove(style["show"])
-    },
-    yes: function () {
-      importSystem.no()
-      chgCtn(tmpText)
-    },
-  }
+  const [storeSplitRatio, setStoreSplitRatio] = useLocalStorage<number>(
+    type === "normal" ? 'tool/markdown/splitRatio' : 'tool/markdown-kilo/splitRatio',
+    50
+  );
+  const [splitRatio, setSplitRatio] = useState<number>(50);
 
   useEffect(() => {
-    if (ctn === defaultText) {
-      const randomInitialText = functions.randomChoose<string>(textList)!
-      chgCtn(randomInitialText, { save: false });
+    if (storeSplitRatio !== undefined) {
+      setSplitRatio(storeSplitRatio);
     }
+  }, [storeSplitRatio]);
 
-    document.onkeydown = (e) => {
-      switch (e.key) {
-        case 's': {
-          if (e.ctrlKey) {
-            e.preventDefault();
-            if (ingSaveKey) return;
-            if (ele.save().classList.contains(style["show"])) {
-              saveSystem.yes()
-            } else {
-              saveSystem.save()
-            }
+  useEffect(() => {
+    const timer = setTimeout(() => setStoreSplitRatio(splitRatio), 500);
+    return () => clearTimeout(timer);
+  }, [splitRatio]);
+
+  const [scrollPos, setScrollPos] = useState<[number, number]>([0, 0])
+  const [content, setContent] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [displayImport, setDisplayImport] = useState(false);
+  const [displaySave, setDisplaySave] = useState(false);
+
+  const viewRef = useRef<HTMLDivElement | null>(null);
+
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const positionRestored = useRef(false);
+  const editerStatusRef = useRef<EditorStatus | null>(editerStatus)
+
+  const isResizing = useRef(false);
+  const [isResizi, setIsResizing] = useState(false);
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: any) => {
+    e.preventDefault();
+    isResizing.current = true;
+    setIsResizing(true)
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current || !mainRef.current) return;
+      e.preventDefault();
+      const rect = mainRef.current.getBoundingClientRect();
+      const ratio = ((e.clientX - rect.left) / rect.width) * 100;
+      setSplitRatio(Math.min(Math.max(ratio, 20), 80));
+    };
+
+    const handleMouseUp = () => {
+      isResizing.current = false;
+      setIsResizing(false)
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  const handleEditorDidMount: OnMount = (editor, monaco) => {
+
+    editorRef.current = editor;
+
+    editor.focus()
+
+    editor.onDidScrollChange((e) => {
+      if (editerStatusRef.current)
+        editerStatusRef.current.scroll = { scrollLeft: e.scrollLeft, scrollTop: e.scrollTop }
+      else
+        editerStatusRef.current = { scroll: { scrollLeft: e.scrollLeft, scrollTop: e.scrollTop } };
+
+      setEditerStatus(editerStatusRef.current);
+    });
+
+    editor.onDidChangeCursorSelection(() => {
+      const selections = editor.getSelections();
+      if (!selections) return
+      if (editerStatusRef.current)
+        editerStatusRef.current.selections = selections
+      else
+        editerStatusRef.current = { selections: selections }
+
+      setEditerStatus(editerStatusRef.current);
+    });
+  };
+
+  const viewScrollRestored = useRef(false);
+
+  useEffect(() => {
+    if (viewScrollRestored.current) return;
+    if (!content || !viewRef.current) return;
+
+    viewScrollRestored.current = true;
+
+    let raf2: number;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        viewRef.current?.scroll({
+          left: storeScrollPos[0],
+          top: storeScrollPos[1],
+          behavior: "instant",
+        });
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [content]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setStoreContent(content), 500);
+    return () => clearTimeout(timer);
+  }, [content]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setStoreScrollPos(scrollPos), 500);
+    return () => clearTimeout(timer);
+  }, [scrollPos]);
+
+  useEffect(() => {
+    if (positionRestored.current) return;
+    if (!editorRef.current || !editerStatus || !content) return;
+
+    positionRestored.current = true;
+    const editor = editorRef.current;
+
+    const ani = requestAnimationFrame(() => {
+      if (editerStatus.selections?.length) {
+        editor.setSelections(editerStatus.selections);
+        editor.revealPositionInCenter(
+          editerStatus.selections[editerStatus.selections.length - 1].getPosition()
+        );
+      }
+      if (editerStatus.scroll) {
+        editor.setScrollTop(editerStatus.scroll.scrollTop);
+        editor.setScrollLeft(editerStatus.scroll.scrollLeft);
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(ani)
+    }
+  }, [content, editerStatus]);
+
+  useEffect(() => {
+    const el = viewRef.current;
+    if (!el) return;
+
+    const handler = () => {
+      setScrollPos([el.scrollLeft, el.scrollTop]);
+    };
+
+    el.addEventListener("scroll", handler, { passive: true });
+    return () => el.removeEventListener("scroll", handler);
+  }, []);
+
+  const temText = useRef("")
+  const fileNameInp = useRef<HTMLInputElement | null>(null)
+
+  const saveFile = useCallback(() => {
+    functions.download(content, `${fileName || "untitled"}.md`)
+    setDisplaySave(false)
+  }, [content, fileName])
+
+  const ImportFile = useCallback(() => {
+    setContent(temText.current)
+    temText.current = "";
+    setDisplayImport(false)
+  }, [])
+
+  const textList = useMemo(() => [
+    defText.all,
+    ...(type === "kilo" ? defText.kilo : defText.nor),
+  ].map(t => t.join("\n")).map(t => type === "kilo" ? t : t.replaceAll("\n", "  \n")), [type])
+
+  useEffect(() => {
+    if (storeContent) setContent(storeContent)
+    else setContent(functions.randomChoose(textList)!);
+  }, [textList]);
+
+  useEffect(() => {
+    const keyEvent = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.code === "KeyS") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          if (displaySave) {
+            saveFile()
+            fileNameInp.current?.blur()
+          } else {
+            setDisplaySave(true)
+            fileNameInp.current?.focus()
           }
-
-          break;
+        } else {
+          setStoreContent(content)
         }
+      }
 
-        case 'Enter': {
-
-          if (ele.save().classList.contains(style["show"])) {
-            saveSystem.yes()
-          }
-
-          if (ele.import().classList.contains(style["show"])) {
-            importSystem.yes()
-          }
-
-          break;
+      if (e.key === "Enter") {
+        if (displaySave) {
+          saveFile()
+          fileNameInp.current?.blur()
         }
-
-        case 'Escape': {
-
-          saveSystem.no()
-          importSystem.no()
-
-          break;
+        if (displayImport) {
+          ImportFile()
         }
+      }
+      if (e.code === "Escape") {
+        setDisplaySave(false)
+        setDisplayImport(false)
+        fileNameInp.current?.blur()
       }
     }
 
+    document.addEventListener("keydown", keyEvent)
     return () => {
-      document.onkeydown = null
+      document.removeEventListener("keydown", keyEvent)
     }
-  }, [])
+  }, [displaySave, displayImport, content])
 
-  useEffect(() => {
-    nowContent = ctn
-  }, [ctn])
+  return (<>
+    <HeadSetting title='Markdown預覽' ogp={{
+      title: type === "kilo" ? "Markdown預覽 KILO Ver." : "Markdown預覽",
+      description: type === "kilo" ? "預覽markdown的神奇小東西 但全都是我的元件" : "預覽markdown的神奇小東西",
+      color: toolsColor,
+    }} />
+    <FileDrop onEvent={(e) => {
+      const file = e[0]
+      if (file) {
+        functions.readFile(file,
+          (content) => {
+            temText.current = content?.toString() || ""
+            setDisplayImport(true)
+          }
+        );
 
-  return (
-    <>
-      <HeadSetting title='Markdown預覽' ogp={{
-        title: type === "kilo" ? "Markdown預覽 KILO Ver." : "Markdown預覽",
-        description: type === "kilo" ? "預覽markdown的神奇小東西 但全都是我的元件" : "預覽markdown的神奇小東西",
-        color: toolsColor,
-      }} />
-      <HeadSetting title='Markdown預覽' />
-      <FileDrop onEvent={(e) => {
-        const file = e[0]
-        if (file) {
-          functions.readFile(file,
-            (content) => {
-              tmpText = content?.toString() || "你確定裏面有寫東西嗎owo?"
-              importSystem.import()
-            }
-          );
+        setFileName(file.name.slice(0, -3));
+      }
+    }} onlyOneFile={true} />
 
-          (document.getElementById("FileName")! as HTMLInputElement).value = file.name.slice(0, -3);
-
-          saveSystem.no()
-
-        }
-      }} onlyOneFile={true} />
-
-      <div id={style["Save"]}>
+    <div className={style["Frame"]}>
+      <div className={clsx(style["Save"], displaySave && style["show"])}>
         <div className={style["Window"]}>
           <div className={style["main"]}>
-            {"將我寫的這個東西另存爲"}<input placeholder='無標題' type="text" id='FileName' />{".md"}
+            {"將我寫的這個東西另存爲"}<input ref={fileNameInp} placeholder='無標題' type="text" id='FileName' />{".md"}
           </div>
           <div className={style["buttons"]}>
-            <button onClick={saveSystem.yes} className={style["ok"]}>{"保存！ [ Enter ]"}</button>
-            <button onClick={saveSystem.no} className={style["close"]}>{"先等等.... [ Esc ]"}</button>
+            <button onClick={saveFile} className={style["ok"]}>{"保存！ [ Enter ]"}</button>
+            <button onClick={_ => {
+              setDisplaySave(false)
+              fileNameInp.current?.blur()
+            }} className={style["close"]}>{"先等等.... [ Esc ]"}</button>
           </div>
         </div>
       </div>
 
-      <div id={style["Import"]}>
+      <div className={clsx(style["Import"], displayImport && style["show"])}>
         <div className={style["Window"]}>
           <div className={style["main"]}>
             {"你確定要直接覆寫你現在還沒保存的東西嗎"}
           </div>
           <div className={style["buttons"]}>
-            <button onClick={importSystem.yes} className={style["ok"]}>{"沒戳！ [ Enter ]"}</button>
-            <button onClick={importSystem.no} className={style["close"]}>{"修但几勒！ { 等一下！ } [ Esc ]"}</button>
+            <button onClick={ImportFile} className={style["ok"]}>{"沒戳！ [ Enter ]"}</button>
+            <button onClick={_ => setDisplayImport(false)} className={style["close"]}>{"修但几勒！ { 等一下！ } [ Esc ]"}</button>
           </div>
         </div>
       </div>
 
-      <div id={style["Frame"]}>
+      <div className={style["Edit"]} ref={mainRef}>
         <div className={style["title"]}>
           <div className={style["return"]} hover-tips='<=\\ 這看起來超酷的 對吧？ [ /tool ]'>
             <Link href={"./"}>
@@ -198,26 +323,24 @@ export function Markdown({ type }: MarkdownProp) {
 
           <div className={style["title"]}>
             <div>
-              {"Markdown預覽"}
+              {"Markdown預覽" + (type === "kilo" ? " [ KILO Ver. ]" : "")}
             </div>
           </div>
-
-          <div className={style["ingnore"]}>
-            <button className={ingSaveKey ? style["true"] : ""} onClick={() => setSaveKeySta(!ingSaveKey)}>
-              {"忽略 Ctrl + S 快捷鍵"}
-            </button>
-          </div>
         </div>
-        <div className={style["main"]}>
+        <div className={style["main"]} style={{
+          gridTemplateColumns: `${splitRatio}fr 5px ${100 - splitRatio}fr`,
+          transition: isResizi ? "0s" : undefined
+        }}>
           <div className={style["in"]} id="inputArea">
             <Monaco
               className={style["editer"]}
               language="markdown"
-              value={ctn}
+              onMount={handleEditorDidMount}
+              value={content}
               onChange={e => {
-                chgCtn(e || "")
+                setContent(e || "")
               }}
-              theme='hc-black'
+              theme='vs-dark'
               options={{
                 fontSize: 20,
                 mouseWheelZoom: true,
@@ -226,23 +349,28 @@ export function Markdown({ type }: MarkdownProp) {
                   ambiguousCharacters: false
                 },
                 accessibilityPageSize: 10,
-                tabSize: 2
+                tabSize: 2,
+                readOnly: (displaySave || displayImport),
               }}
-
             />
-            <div className={style["filter"]} />
           </div>
-          <div className={style["out"]} id="output">
+          <div
+            className={style["resizer"]}
+            onMouseDown={handleMouseDown}
+            onContextMenu={e => { e.preventDefault(); setSplitRatio(50); }}
+            onDoubleClick={e => { e.preventDefault(); setSplitRatio(50); }}
+          />
+          <div className={style["out"]} id="output" ref={viewRef}>
             {type === "normal" ?
-              <ReactMarkdown children={ctn} />
+              <ReactMarkdown children={content} />
               :
-              <CustomMarkdown input={ctn} />
+              <CustomMarkdown input={content} />
             }
           </div>
         </div>
       </div>
-    </>
-  )
+    </div>
+  </>)
 }
 
-export default () => <Markdown type='normal' />
+export default () => <Markdown />

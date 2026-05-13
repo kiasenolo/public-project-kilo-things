@@ -12,8 +12,64 @@ import { isArray } from 'tone';
 import { TCFTI_List } from './TCFTI';
 import { toolsColor } from '..';
 
-const defaultList = ["#ffffff", "#ff0000", "#00ff00", "#0000ff", "#ff00ff", "#00ffff", "#ffff00"];
-const gayList = ["#ff0000", "#ff8000", "#ffc400", "#c2ff00", "#41ff00", "#00ffa2", "#00b5ff", "#0045ff", "#8d00ff", "#eb00ff", "#ff00b9"];
+const defaultList = [
+  "#ffffff",
+  "#ff0000",
+  "#00ff00",
+  "#0000ff",
+  "#ff00ff",
+  "#00ffff",
+  "#ffff00",
+];
+const gayList = [
+  "#ff0000",
+  "#ff8000",
+  "#ffc400",
+  "#c2ff00",
+  "#41ff00",
+  "#00ffa2",
+  "#00b5ff",
+  "#0045ff",
+  "#8d00ff",
+  "#eb00ff",
+  "#ff00b9",
+];
+const favList = [
+  "#feeab5",
+  "#fed89f",
+  "#e7b580",
+  "#b29873",
+  "#beccb2",
+  "#c5caca",
+  "#a7bbb7",
+  "#d8f5fb",
+  "#b1e4ed",
+  "#3de0fb",
+  "#627e93",
+  "#72ada2",
+  "#51d0bb",
+  "#5ac3a4",
+  "#3fa494",
+  "#F2ECC1",
+  "#C2B390",
+  "#B6A469",
+  "#978255",
+  "#CAB670",
+  "#BDA15F",
+  "#C98437",
+  "#AA7E4D",
+  "#FFFAE7",
+  "#DFD8BE",
+  "#BDB898",
+  "#AEAA88",
+  "#C3AF60",
+  "#B69C25",
+  "#BBBAA7",
+  "#9F9075",
+  "#8F7264",
+  "#82878D",
+  "#ADB1CC",
+]
 
 const nrmClr = (hex: string) => colormgr.isHex(hex) ? colormgr.normalizeHex(hex) : "";
 const bright = (hex: string) => colormgr.mixColor(colormgr.bright(hex, 1.8), "+", "#fff", .30);
@@ -128,7 +184,7 @@ export default function Palette() {
       className={style["button"]}
       disabled={disable}
       style={{
-        opacity: disable ? ".5" : undefined,
+        opacity: disable ? ".2" : undefined,
         pointerEvents: disable ? "none" : undefined,
         ...btnStyle
       }}
@@ -345,6 +401,10 @@ export default function Palette() {
                         case "def":
                         case "default": {
                           setColors(defaultList)
+                          return clear();
+                        }
+                        case "fav": {
+                          setColors(favList)
                           return clear();
                         }
                         case "gay": {
