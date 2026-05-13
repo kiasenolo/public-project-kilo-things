@@ -217,7 +217,7 @@ export function Markdown({ type = "normal" }: MarkdownProp) {
   }, [])
 
   const textList = useMemo(() => [
-    defText.all,
+    ...defText.all,
     ...(type === "kilo" ? defText.kilo : defText.nor),
   ].map(t => t.join("\n")).map(t => type === "kilo" ? t : t.replaceAll("\n", "  \n")), [type])
 
