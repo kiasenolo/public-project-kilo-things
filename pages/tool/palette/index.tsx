@@ -71,6 +71,36 @@ const favList = [
   "#ADB1CC",
 ]
 
+const appID = "kiasenolo.tool.simple-color-palette"
+
+namespace DragType {
+  export type text = {
+    type: "text"
+    color: string
+  }
+
+  export type newColor = {
+    type: "newColor"
+    color: string
+  }
+
+  export type dragColor = {
+    type: "dragColor"
+    index: number
+    color: string
+  }
+
+  export type _ALL =
+    | text
+    | newColor
+    | dragColor
+}
+
+function drag(e: React.DragEvent, data: DragType._ALL) {
+  e.dataTransfer.setData(appID, JSON.stringify(data));
+  e.dataTransfer.setData("text/plain", data.color);
+}
+
 const nrmClr = (hex: string) => colormgr.isHex(hex) ? colormgr.normalizeHex(hex) : "";
 const bright = (hex: string) => colormgr.mixColor(colormgr.bright(hex, 1.8), "+", "#fff", .30);
 
@@ -85,37 +115,67 @@ const copy = (str: string) => {
     })
 }
 
+
 type ButtonProps = {
   path: JSX.Element,
-  onClick?: () => void
+  onClick?: (e: mouseEvent) => void
   color: string
   disable?: boolean
 };
 
-type ColorBarProps = {
-  color: string
-  value: string
-} & ({
-  type: "input",
-  ev: {
-    change?: (e: React.ChangeEvent<HTMLInputElement>) => void
-    keyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
-    add?: () => void
-    copy?: () => void
-  }
-} | {
-  type: "color",
-  ev: {
-    isBtm: boolean
-    isTop: boolean
-    change?: (e: React.ChangeEvent<HTMLInputElement>) => void
-    keyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
-    copy?: () => void
-    up?: () => void
-    down?: () => void
-    deleted?: () => void
-  }
-});
+type mouseEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>
+
+type baseEv = {
+  change?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  keyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  onDrag?: (e: React.DragEvent<HTMLDivElement>) => void
+}
+
+type DragAreaProp = {
+  setColors: React.Dispatch<React.SetStateAction<string[]>>;
+  setNowColor: React.Dispatch<React.SetStateAction<string>>;
+  index: number;
+}
+
+const DropArea = ({
+  setColors,
+  setNowColor,
+  index,
+}: DragAreaProp) => {
+  const [activ, setActiv] = useState(false)
+
+  return <div
+    className={clsx(style["DropArea"], activ && style["activ"])}
+    onDragOver={e => { e.preventDefault(); e.stopPropagation(); setActiv(true); }}
+    onDragLeave={e => { setActiv(false) }}
+    onDrop={e => {
+      setActiv(false)
+      if (!e.dataTransfer) return;
+      const itemdata = e.dataTransfer.getData(appID);
+      console.log(itemdata);
+
+      if (itemdata) {
+        const item: DragType._ALL = JSON.parse(itemdata);
+        setColors(p => {
+          let _ = [...p]
+          const isLast = index === _.length;
+
+          switch (item.type) {
+            case 'newColor': {
+              setNowColor("");
+              return [..._.slice(0, index), colormgr.normalizeHex(item.color), ..._.slice(index)]
+            }
+            case 'dragColor': {
+              _[item.index] = "DEL"
+              return [..._.slice(0, index), colormgr.normalizeHex(item.color), ..._.slice(index)].filter(e => !e.endsWith("DEL"))
+            }
+            case 'text': return p
+          }
+        })
+      }
+    }}
+  ><div /></div>
+}
 
 export default function Palette() {
   const [_storedColors, _setStoredColors] = useLocalStorage<string[]>("tool/palette/colorList", defaultList)
@@ -136,6 +196,9 @@ export default function Palette() {
       }
       if (event.altKey && event.code === "KeyA") {
         setEditMode(prev => !prev);
+      }
+      if (event.altKey && event.code === "KeyR") {
+        setColors(e => e.map(colormgr.normalizeHex))
       }
     };
     document.addEventListener("keydown", keyEvent);
@@ -206,6 +269,27 @@ export default function Palette() {
     </button >
   }, [])
 
+  type ColorBarProps = {
+    color: string
+    value: string
+  } & ({
+    type: "input",
+    ev: {
+      add?: (e: mouseEvent) => void
+      copy?: (e: mouseEvent) => void
+    } & baseEv
+  } | {
+    type: "color",
+    ev: {
+      isBtm: boolean
+      isTop: boolean
+      copy?: (e: mouseEvent) => void
+      up?: (e: mouseEvent) => void
+      down?: (e: mouseEvent) => void
+      deleted?: (e: mouseEvent) => void
+    } & baseEv
+  });
+
   const ColorBar = useCallback(({
     color,
     value,
@@ -241,53 +325,77 @@ export default function Palette() {
           borderColor: color,
           color: bright(color),
         }}
+        onDrop={e => {
+          if (!e.dataTransfer) return;
+          const itemdata = e.dataTransfer.getData(appID);
+          console.log(itemdata);
+
+          if (itemdata) {
+            const item: DragType._ALL = JSON.parse(itemdata);
+            switch (item.type) {
+              case 'newColor':
+              case 'dragColor':
+                return e.preventDefault()
+            }
+          }
+        }}
         onChange={ev.change}
         onKeyDown={ev.keyDown}
       />
     </>);
 
-    switch (type) {
-      case 'input':
-        return <div className={style["colorBar"]}>
-          {prefix}
-          <Button
-            path={<path d="M480-200q-17 0-28.5-11.5T440-240v-200H240q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h200v-200q0-17 11.5-28.5T480-760q17 0 28.5 11.5T520-720v200h200q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H520v200q0 17-11.5 28.5T480-200Z" />}
-            color={color}
-            onClick={ev.add}
-          />
-          <Button
-            path={<path d="M200-80q-33 0-56.5-23.5T120-160v-520q0-17 11.5-28.5T160-720q17 0 28.5 11.5T200-680v520h400q17 0 28.5 11.5T640-120q0 17-11.5 28.5T600-80H200Zm160-160q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Z" />}
-            color={color}
-            onClick={ev.copy}
-          />
-        </div>
-      case 'color':
-        return <div className={style["colorBar"]}>
-          {prefix}
-          <Button
-            path={<path d="M200-80q-33 0-56.5-23.5T120-160v-520q0-17 11.5-28.5T160-720q17 0 28.5 11.5T200-680v520h400q17 0 28.5 11.5T640-120q0 17-11.5 28.5T600-80H200Zm160-160q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Z" />}
-            color={color}
-            onClick={ev.copy}
-          />
-          <Button
-            path={<path d="M280-120q-33 0-56.5-23.5T200-200v-520q-17 0-28.5-11.5T160-760q0-17 11.5-28.5T200-800h160q0-17 11.5-28.5T400-840h160q17 0 28.5 11.5T600-800h160q17 0 28.5 11.5T800-760q0 17-11.5 28.5T760-720v520q0 33-23.5 56.5T680-120H280Zm80-200q0 17 11.5 28.5T400-280q17 0 28.5-11.5T440-320v-280q0-17-11.5-28.5T400-640q-17 0-28.5 11.5T360-600v280Zm160 0q0 17 11.5 28.5T560-280q17 0 28.5-11.5T600-320v-280q0-17-11.5-28.5T560-640q-17 0-28.5 11.5T520-600v280Z" />}
-            color={color}
-            onClick={ev.deleted}
-          />
-          <Button
-            path={<path d="M268-373q-11-11-11-28t11-28l184-184q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l185 185q11 11 11 27t-12 28q-11 11-28 11t-28-11L480-529 323-372q-11 11-27 11t-28-12Z" />}
-            color={color}
-            onClick={ev.up}
-            disable={ev.isTop}
-          />
-          <Button
-            path={<path d="M480-362q-8 0-15-2.5t-13-8.5L267-558q-11-11-10.5-27.5T268-613q11-11 28-11t28 11l156 156 157-157q11-11 27.5-10.5T692-613q11 11 11 28t-11 28L508-373q-6 6-13 8.5t-15 2.5Z" />}
-            color={color}
-            onClick={ev.down}
-            disable={ev.isBtm}
-          />
-        </div>
-    }
+    const ctn = (() => {
+      switch (type) {
+        case 'input':
+          return <>
+            {prefix}
+            <Button
+              path={<path d="M480-200q-17 0-28.5-11.5T440-240v-200H240q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h200v-200q0-17 11.5-28.5T480-760q17 0 28.5 11.5T520-720v200h200q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H520v200q0 17-11.5 28.5T480-200Z" />}
+              color={color}
+              onClick={ev.add}
+            />
+            <Button
+              path={<path d="M200-80q-33 0-56.5-23.5T120-160v-520q0-17 11.5-28.5T160-720q17 0 28.5 11.5T200-680v520h400q17 0 28.5 11.5T640-120q0 17-11.5 28.5T600-80H200Zm160-160q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Z" />}
+              color={color}
+              onClick={ev.copy}
+            />
+          </>
+
+        case 'color':
+          return <>
+            {prefix}
+            <Button
+              path={<path d="M200-80q-33 0-56.5-23.5T120-160v-520q0-17 11.5-28.5T160-720q17 0 28.5 11.5T200-680v520h400q17 0 28.5 11.5T640-120q0 17-11.5 28.5T600-80H200Zm160-160q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Z" />}
+              color={color}
+              onClick={ev.copy}
+            />
+            <Button
+              path={<path d="M280-120q-33 0-56.5-23.5T200-200v-520q-17 0-28.5-11.5T160-760q0-17 11.5-28.5T200-800h160q0-17 11.5-28.5T400-840h160q17 0 28.5 11.5T600-800h160q17 0 28.5 11.5T800-760q0 17-11.5 28.5T760-720v520q0 33-23.5 56.5T680-120H280Zm80-200q0 17 11.5 28.5T400-280q17 0 28.5-11.5T440-320v-280q0-17-11.5-28.5T400-640q-17 0-28.5 11.5T360-600v280Zm160 0q0 17 11.5 28.5T560-280q17 0 28.5-11.5T600-320v-280q0-17-11.5-28.5T560-640q-17 0-28.5 11.5T520-600v280Z" />}
+              color={color}
+              onClick={ev.deleted}
+            />
+            <Button
+              path={<path d="M268-373q-11-11-11-28t11-28l184-184q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l185 185q11 11 11 27t-12 28q-11 11-28 11t-28-11L480-529 323-372q-11 11-27 11t-28-12Z" />}
+              color={color}
+              onClick={ev.up}
+              disable={ev.isTop}
+            />
+            <Button
+              path={<path d="M480-362q-8 0-15-2.5t-13-8.5L267-558q-11-11-10.5-27.5T268-613q11-11 28-11t28 11l156 156 157-157q11-11 27.5-10.5T692-613q11 11 11 28t-11 28L508-373q-6 6-13 8.5t-15 2.5Z" />}
+              color={color}
+              onClick={ev.down}
+              disable={ev.isBtm}
+            />
+          </>
+      }
+    })()
+    return <div
+      className={style["colorBar"]}
+      draggable={!!ev.onDrag}
+      onDragStart={ev.onDrag}
+    >
+      {ctn}
+    </div>
   }, [])
 
   const TCFTI_Menu = useCallback(() => {
@@ -321,48 +429,57 @@ export default function Palette() {
             <span>{"Color Palette"}</span>
           </div>
           <div className={style["List"]}>
-            {colors.map((color, i) => <ColorBar
-              key={i}
-              color={nrmClr(color)}
-              value={color}
-              type='color'
-              ev={{
-                change(e) {
-                  const value = e.currentTarget.value;
-                  setColors(prev => {
-                    const _ = [...prev]
-                    _[i] = value;
-                    return _
-                  })
-                },
-                copy() {
-                  setColors(prev => {
-                    const _ = [...prev]
-                    _.splice(i, 0, _[i]);
-                    return _
-                  })
-                },
-                deleted() {
-                  setColors(prev => prev.filter((_, idx) => i !== idx))
-                },
-                up() {
-                  setColors(prev => {
-                    const _ = [...prev]
-                    _.splice(i - 1, 0, _.splice(i, 1)[0]);
-                    return _
-                  })
-                },
-                down() {
-                  setColors(prev => {
-                    const _ = [...prev]
-                    _.splice(i + 1, 0, _.splice(i, 1)[0]);
-                    return _
-                  })
-                },
-                isBtm: i === (colors.length - 1),
-                isTop: i === 0,
-              }}
-            />)}
+            <DropArea index={0} setColors={setColors} setNowColor={setNowColor} />
+            {colors.map((color, i) => <>
+              <ColorBar
+                key={i}
+                color={nrmClr(color)}
+                value={color}
+                type='color'
+                ev={{
+                  change(e) {
+                    const value = e.currentTarget.value;
+                    setColors(prev => {
+                      const _ = [...prev]
+                      _[i] = value;
+                      return _
+                    })
+                  },
+                  copy() {
+                    setColors(prev => {
+                      const _ = [...prev]
+                      _.splice(i, 0, _[i]);
+                      return _
+                    })
+                  },
+                  deleted() {
+                    setColors(prev => prev.filter((_, idx) => i !== idx))
+                  },
+                  up() {
+                    setColors(prev => {
+                      const _ = [...prev]
+                      _.splice(i - 1, 0, _.splice(i, 1)[0]);
+                      return _
+                    })
+                  },
+                  down() {
+                    setColors(prev => {
+                      const _ = [...prev]
+                      _.splice(i + 1, 0, _.splice(i, 1)[0]);
+                      return _
+                    })
+                  },
+                  onDrag(e) {
+                    console.log(e);
+
+                    drag(e, { type: "dragColor", color: color, index: i })
+                  },
+                  isBtm: i === (colors.length - 1),
+                  isTop: i === 0,
+                }}
+              />
+              <DropArea index={i + 1} setColors={setColors} setNowColor={setNowColor} />
+            </>)}
           </div>
           <div
             className={style["Input"]}
@@ -457,8 +574,15 @@ export default function Palette() {
                 add() {
                   addColor(nowColor)
                 },
-                copy() {
-                  navigator.clipboard.writeText(JSON.stringify(colors))
+                copy(e) {
+                  if (e.altKey) {
+                    navigator.clipboard.writeText(JSON.stringify(colors, null, 2))
+                  } else {
+                    navigator.clipboard.writeText(JSON.stringify(colors))
+                  }
+                },
+                onDrag(e) {
+                  drag(e, { type: "newColor", color: nowColor, })
                 },
               }}
             />
@@ -469,6 +593,8 @@ export default function Palette() {
           {colors.map((clr, i) => <div
             key={i}
             className={style["color"]}
+            draggable={true}
+            onDragStart={e => drag(e, { type: "text", color: clr })}
             onClick={() => {
               copy(clr)
             }}

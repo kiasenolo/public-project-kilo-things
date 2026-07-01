@@ -30,6 +30,26 @@ $brd-style: 3px solid Color();
     }
   }
 
+  .DropArea {
+    height: 10px;
+    margin: 0 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    opacity: 0;
+
+    div {
+      background-color: #fff8;
+      height: 2px;
+    }
+
+    &.activ {
+      transition: none;
+      opacity: 1;
+    }
+  }
+
   .Edit {
     overflow: hidden;
     display: grid;
@@ -38,7 +58,11 @@ $brd-style: 3px solid Color();
     .colorBar {
       display: flex;
       gap: 5px;
-      padding: 5px;
+      padding: 0 5px;
+
+      &:hover {
+        transition: none;
+      }
 
       .button {
         border: $brd-style;
@@ -100,6 +124,10 @@ $brd-style: 3px solid Color();
 
     .Input {
       background-color: Color(.1);
+
+      .colorBar {
+        padding: 5px;
+      }
     }
   }
 
