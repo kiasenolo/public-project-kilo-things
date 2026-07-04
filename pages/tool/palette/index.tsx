@@ -76,7 +76,7 @@ const appID = "kiasenolo.tool.simple-color-palette"
 namespace DragType {
   export type text = {
     type: "text"
-    color: string
+    text: string
   }
 
   export type newColor = {
@@ -90,15 +90,46 @@ namespace DragType {
     color: string
   }
 
+  export type newPalette = {
+    type: "newPalette"
+    colors: string[]
+  }
+
+  export type dragPalette = {
+    type: "dragPalette"
+    index: number
+    colors: string[]
+  }
+
   export type _ALL =
     | text
     | newColor
     | dragColor
+    | newPalette
+    | dragPalette
 }
 
 function drag(e: React.DragEvent, data: DragType._ALL) {
   e.dataTransfer.setData(appID, JSON.stringify(data));
-  e.dataTransfer.setData("text/plain", data.color);
+  e.stopPropagation()
+  let txt: string = ""
+  switch (data.type) {
+    case 'text': {
+      txt = data.text;
+      break;
+    }
+    case 'newColor':
+    case 'dragColor': {
+      txt = data.color;
+      break;
+    }
+    case 'newPalette':
+    case 'dragPalette': {
+      txt = JSON.stringify(data.type);
+      break;
+    }
+  }
+  e.dataTransfer.setData("text/plain", txt)
 }
 
 const nrmClr = (hex: string) => colormgr.isHex(hex) ? colormgr.normalizeHex(hex) : "";
@@ -119,6 +150,7 @@ const copy = (str: string) => {
 type ButtonProps = {
   path: JSX.Element,
   onClick?: (e: mouseEvent) => void
+  onDrag?: (e: React.DragEvent<HTMLButtonElement>) => void
   color: string
   disable?: boolean
 };
@@ -129,59 +161,19 @@ type baseEv = {
   change?: (e: React.ChangeEvent<HTMLInputElement>) => void
   keyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
   onDrag?: (e: React.DragEvent<HTMLDivElement>) => void
+  copyDrag: (e: React.DragEvent<HTMLButtonElement>) => void,
 }
 
-type DragAreaProp = {
-  setColors: React.Dispatch<React.SetStateAction<string[]>>;
-  setNowColor: React.Dispatch<React.SetStateAction<string>>;
-  index: number;
-}
-
-const DropArea = ({
-  setColors,
-  setNowColor,
-  index,
-}: DragAreaProp) => {
-  const [activ, setActiv] = useState(false)
-
-  return <div
-    className={clsx(style["DropArea"], activ && style["activ"])}
-    onDragOver={e => { e.preventDefault(); e.stopPropagation(); setActiv(true); }}
-    onDragLeave={e => { setActiv(false) }}
-    onDrop={e => {
-      setActiv(false)
-      if (!e.dataTransfer) return;
-      const itemdata = e.dataTransfer.getData(appID);
-      console.log(itemdata);
-
-      if (itemdata) {
-        const item: DragType._ALL = JSON.parse(itemdata);
-        setColors(p => {
-          let _ = [...p]
-          const isLast = index === _.length;
-
-          switch (item.type) {
-            case 'newColor': {
-              setNowColor("");
-              return [..._.slice(0, index), colormgr.normalizeHex(item.color), ..._.slice(index)]
-            }
-            case 'dragColor': {
-              _[item.index] = "DEL"
-              return [..._.slice(0, index), colormgr.normalizeHex(item.color), ..._.slice(index)].filter(e => !e.endsWith("DEL"))
-            }
-            case 'text': return p
-          }
-        })
-      }
-    }}
-  ><div /></div>
-}
 
 export default function Palette() {
   const [_storedColors, _setStoredColors] = useLocalStorage<string[]>("tool/palette/colorList", defaultList)
   const [colors, setColors] = useState<string[]>(defaultList)
+  const [isDraging, setIsDraging] = useState(false)
+  const [dragTar, setDragTar] = useState(-1)
   const [nowColor, setNowColor] = useState("")
   const [editMode, setEditMode] = useLocalStorage<boolean>("tool/palette/editMode", true)
+
+  const [tcftiMenu, setTcftiMenu] = useState<boolean>(false)
 
   useEffect(() => {
     if (_storedColors && isArray(_storedColors)) setColors(_storedColors);
@@ -206,9 +198,17 @@ export default function Palette() {
   }, [colors, setEditMode]);
 
   useEffect(() => {
-    const keyEvent = (event: KeyboardEvent) => {
-      if (event.altKey && event.code === "KeyA") {
-        setEditMode(e => !e)
+    const keyEvent = (e: KeyboardEvent) => {
+      if (e.code === "Escape") {
+        setTcftiMenu(false)
+      }
+      if (e.altKey) {
+        if (e.code === "KeyA" && !tcftiMenu) {
+          setEditMode(e => !e)
+        }
+        if (e.code === "KeyT" && editMode) {
+          setTcftiMenu(e => !e)
+        }
       }
     }
 
@@ -216,13 +216,20 @@ export default function Palette() {
     return () => {
       document.removeEventListener("keydown", keyEvent)
     }
-  }, [editMode])
+  }, [editMode, tcftiMenu])
+
+  const isValidColor = useCallback((color: string, isVaild?: (color: string) => void) => {
+    if (colormgr.isHex(color)) {
+      isVaild?.(color)
+      return true
+    } else {
+      _app.throwNewNotic("this is not a valid color hex")
+      return false
+    }
+  }, [])
 
   const addColor = useCallback((color: string) => {
-    if (colormgr.isHex(color)) {
-      setColors(pre => [...pre, colormgr.normalizeHex(color)])
-      clear()
-    } else _app.throwNewNotic("this is not a valid color hex")
+    isValidColor(color, (color) => { setColors(pre => [...pre, colormgr.normalizeHex(color)]); clear(); })
   }, [])
 
   const clear = () => setNowColor("")
@@ -230,6 +237,7 @@ export default function Palette() {
   const Button = useCallback(({
     path,
     onClick,
+    onDrag,
     color,
     disable,
   }: ButtonProps) => {
@@ -251,6 +259,8 @@ export default function Palette() {
         pointerEvents: disable ? "none" : undefined,
         ...btnStyle
       }}
+      draggable={!!onDrag}
+      onDragStart={onDrag}
       onClick={onClick}
       onMouseMove={_ => setHover(true)}
       onMouseLeave={_ => setHover(false)}
@@ -272,6 +282,8 @@ export default function Palette() {
   type ColorBarProps = {
     color: string
     value: string
+    index: number
+    isDraging: boolean
   } & ({
     type: "input",
     ev: {
@@ -295,6 +307,8 @@ export default function Palette() {
     value,
     type,
     ev,
+    index,
+    isDraging,
   }: ColorBarProps) => {
     const prefix = (<>
       <div
@@ -358,6 +372,7 @@ export default function Palette() {
               path={<path d="M200-80q-33 0-56.5-23.5T120-160v-520q0-17 11.5-28.5T160-720q17 0 28.5 11.5T200-680v520h400q17 0 28.5 11.5T640-120q0 17-11.5 28.5T600-80H200Zm160-160q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Z" />}
               color={color}
               onClick={ev.copy}
+              onDrag={ev.copyDrag}
             />
           </>
 
@@ -368,6 +383,7 @@ export default function Palette() {
               path={<path d="M200-80q-33 0-56.5-23.5T120-160v-520q0-17 11.5-28.5T160-720q17 0 28.5 11.5T200-680v520h400q17 0 28.5 11.5T640-120q0 17-11.5 28.5T600-80H200Zm160-160q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Z" />}
               color={color}
               onClick={ev.copy}
+              onDrag={ev.copyDrag}
             />
             <Button
               path={<path d="M280-120q-33 0-56.5-23.5T200-200v-520q-17 0-28.5-11.5T160-760q0-17 11.5-28.5T200-800h160q0-17 11.5-28.5T400-840h160q17 0 28.5 11.5T600-800h160q17 0 28.5 11.5T800-760q0 17-11.5 28.5T760-720v520q0 33-23.5 56.5T680-120H280Zm80-200q0 17 11.5 28.5T400-280q17 0 28.5-11.5T440-320v-280q0-17-11.5-28.5T400-640q-17 0-28.5 11.5T360-600v280Zm160 0q0 17 11.5 28.5T560-280q17 0 28.5-11.5T600-320v-280q0-17-11.5-28.5T560-640q-17 0-28.5 11.5T520-600v280Z" />}
@@ -394,21 +410,75 @@ export default function Palette() {
       draggable={!!ev.onDrag}
       onDragStart={ev.onDrag}
     >
-      {ctn}
+      {(index !== -1 && isDraging) && <div className={style["drgArea"]}>
+        {[
+          index,
+          index + 1
+        ].map((nowIndx, key) => <div
+          key={index + key}
+          onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
+          onDragEnter={() => setDragTar(nowIndx)}
+          onDrop={e => dropEvent(e, nowIndx)}
+        />)}
+      </div>}
+      <div className={style["clr"]}>{ctn}</div>
     </div>
   }, [])
 
-  const TCFTI_Menu = useCallback(() => {
-    newInput.select<number>(
-      TCFTI_List.map(((e, i) => ({
-        name: e.name ?? e.id,
-        info: `tcfti-${e.id} [${i}]`,
-        value: i
-      }))),
-      (i) => {
-        setColors(TCFTI_List[i].colors)
-      }
-    )
+  const dropEvent = (e: React.DragEvent<HTMLDivElement>, index: number,) => {
+    if (!e.dataTransfer) return;
+    const itemdata = e.dataTransfer.getData(appID);
+    console.log(itemdata);
+
+    if (itemdata) {
+      const item: DragType._ALL = JSON.parse(itemdata);
+      setColors(p => {
+        let _ = [...p]
+
+        switch (item.type) {
+          case 'newColor': {
+            if (isValidColor(item.color)) {
+              clear()
+              return [..._.slice(0, index), colormgr.normalizeHex(item.color), ..._.slice(index)]
+            } else {
+              return p
+            }
+          }
+          case 'dragColor': {
+            _[item.index] = "DEL"
+            if (isValidColor(item.color)) {
+              return [..._.slice(0, index), colormgr.normalizeHex(item.color), ..._.slice(index)].filter(e => !e.endsWith("DEL"))
+            } else {
+              return p
+            }
+          }
+          case 'text':
+          case 'newPalette':
+          case 'dragPalette':
+            return p
+        }
+      })
+    }
+  }
+
+  type DragAreaProp = {
+    setColors: React.Dispatch<React.SetStateAction<string[]>>;
+    setNowColor: React.Dispatch<React.SetStateAction<string>>;
+    index: number;
+    dragTar: number
+  }
+
+  const DropArea = useCallback(({
+    index,
+    dragTar,
+  }: DragAreaProp) => {
+
+    return <div
+      className={clsx(style["DropArea"], dragTar === index && style["activ"])}
+      onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
+      onDragEnter={() => setDragTar(index)}
+      onDrop={e => dropEvent(e, index)}
+    ><div /></div>
   }, [])
 
   return (
@@ -422,19 +492,49 @@ export default function Palette() {
       <div
         id={style["Frame"]}
         className={clsx(!editMode && style["copyColor"])}
+        onDrop={e => { setDragTar(-1); setIsDraging(false) }}
+        onDragEnd={e => { setDragTar(-1); setIsDraging(false) }}
       >
+
+        <div className={clsx(style["TCFTI"], tcftiMenu && style["show"])}>
+          {TCFTI_List.map((e, i) => <div
+            className={style["palette"]}
+            key={"pat-" + i}
+            onClick={() => {
+              setColors(e.colors)
+              setTcftiMenu(false)
+            }}
+          >
+            <div className={style["title"]}>
+              {e.name ?
+                <div className={style["name"]}>{`[ ${i} ] `}{e.name}<span>{e.id}</span></div>
+                :
+                <div className={style["name"]}>{`[ ${i} ] `}{e.id}</div>
+              }
+              <a href={e.souce} target='_blank' onClick={e => e.stopPropagation()}>source</a>
+
+            </div>
+            <div className={style["display"]}>
+              {e.colors.map((e, i2) => <div key={"pat-" + i + "-" + i2} style={{ backgroundColor: e }}></div>)}
+            </div>
+          </div>)}
+        </div>
 
         <div className={style["Edit"]}>
           <div className={style["Title"]}>
-            <span>{"Color Palette"}</span>
+            <div className={style["TexT"]}>
+              <span>{"Color Palette"}</span>
+            </div>
           </div>
           <div className={style["List"]}>
-            <DropArea index={0} setColors={setColors} setNowColor={setNowColor} />
+            <DropArea index={0} setColors={setColors} setNowColor={setNowColor} dragTar={dragTar} />
             {colors.map((color, i) => <>
               <ColorBar
+                index={i}
                 key={i}
                 color={nrmClr(color)}
                 value={color}
+                isDraging={isDraging}
                 type='color'
                 ev={{
                   change(e) {
@@ -470,16 +570,25 @@ export default function Palette() {
                     })
                   },
                   onDrag(e) {
-                    console.log(e);
-
+                    setIsDraging(true)
                     drag(e, { type: "dragColor", color: color, index: i })
+                  },
+                  copyDrag(e) {
+                    setIsDraging(true)
+                    drag(e, { type: "text", text: color })
                   },
                   isBtm: i === (colors.length - 1),
                   isTop: i === 0,
                 }}
               />
-              <DropArea index={i + 1} setColors={setColors} setNowColor={setNowColor} />
+              <DropArea key={"drp" + i + 1} index={i + 1} setColors={setColors} setNowColor={setNowColor} dragTar={dragTar} />
             </>)}
+            <div
+              className={style["last"]}
+              onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
+              onDragEnter={() => setDragTar(colors.length)}
+              onDrop={e => dropEvent(e, colors.length)}
+            ><div /></div>
           </div>
           <div
             className={style["Input"]}
@@ -488,8 +597,10 @@ export default function Palette() {
             }}
           >
             <ColorBar
+              index={-1}
               color={nrmClr(nowColor)}
               value={nowColor}
+              isDraging={isDraging}
               type='input'
               ev={{
                 change(e) {
@@ -529,7 +640,7 @@ export default function Palette() {
                           return clear();
                         }
                         case "tcfti": {
-                          TCFTI_Menu()
+                          setTcftiMenu(true)
                           return clear();
                         }
                         default: {
@@ -562,7 +673,7 @@ export default function Palette() {
                                 setColors(target.colors)
                               } else _app.throwNewNotic("tcfti not found");
                             } else {
-                              TCFTI_Menu()
+                              setTcftiMenu(true)
                               return clear();
                             }
                           } else addColor(value)
@@ -582,7 +693,16 @@ export default function Palette() {
                   }
                 },
                 onDrag(e) {
+                  setIsDraging(true)
                   drag(e, { type: "newColor", color: nowColor, })
+                },
+                copyDrag(e) {
+                  setIsDraging(true)
+                  if (e.altKey) {
+                    drag(e, { type: "text", text: JSON.stringify(colors, null, 2) })
+                  } else {
+                    drag(e, { type: "text", text: JSON.stringify(colors) })
+                  }
                 },
               }}
             />
@@ -594,7 +714,7 @@ export default function Palette() {
             key={i}
             className={style["color"]}
             draggable={true}
-            onDragStart={e => drag(e, { type: "text", color: clr })}
+            onDragStart={e => drag(e, { type: "text", text: clr })}
             onClick={() => {
               copy(clr)
             }}

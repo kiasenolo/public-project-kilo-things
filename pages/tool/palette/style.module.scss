@@ -7,6 +7,10 @@ $brd-style: 3px solid Color();
   @include FullDiv();
   overflow: hidden;
 
+  * {
+    user-select: none;
+  }
+
   & {
     .Edit {
       transform: none;
@@ -31,7 +35,7 @@ $brd-style: 3px solid Color();
   }
 
   .DropArea {
-    height: 10px;
+    min-height: 10px;
     margin: 0 10px;
     display: flex;
     flex-direction: column;
@@ -40,7 +44,8 @@ $brd-style: 3px solid Color();
     opacity: 0;
 
     div {
-      background-color: #fff8;
+      pointer-events: none;
+      background-color: #fff;
       height: 2px;
     }
 
@@ -50,12 +55,76 @@ $brd-style: 3px solid Color();
     }
   }
 
-  .Edit {
-    overflow: hidden;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
+  .TCFTI {
+    z-index: 5;
+    padding: 15px 0;
+    background-color: #0008;
+    backdrop-filter: $blur-effect;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    gap: 10px;
+    transform: translateY(100%);
+    transition: cubic-bezier(.58, .08, 0, 1) .3s;
 
-    .colorBar {
+    .palette {
+      opacity: 0;
+      background-color: Color(1, .1);
+      padding: 15px 20px;
+
+      .title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .name {
+          padding: 0 5px;
+          font-size: 25px;
+          margin-bottom: 5px;
+
+          span {
+            opacity: .5;
+            font-size: 18px;
+            margin-left: 10px;
+          }
+        }
+
+        a {
+          opacity: .25;
+        }
+      }
+
+      .display {
+        padding: 5px 0;
+        display: flex;
+
+        div {
+          flex-grow: 1;
+          height: 20px;
+        }
+      }
+
+      &:hover {
+        transition: none;
+        background-color: Color(1, .2);
+      }
+    }
+
+    &.show {
+      transform: none;
+      transition: DefaultTransition();
+
+      .palette {
+        opacity: 1;
+      }
+    }
+  }
+
+  .colorBar {
+    @include GridFrame();
+
+    .clr {
+      z-index: 1;
       display: flex;
       gap: 5px;
       padding: 0 5px;
@@ -106,20 +175,48 @@ $brd-style: 3px solid Color();
       }
     }
 
+    .drgArea {
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+
+      >div {
+        flex-grow: 1;
+      }
+    }
+  }
+
+  .Edit {
+    z-index: 2;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+
     .Title {
-      @include FlexCenter2();
+      @include GridFrame();
       background: Color(.2);
       padding: 10px;
 
-      span {
-        font-size: 20px;
-        color: Color();
+      .TexT {
+        @include FlexCenter2();
+
+        span {
+          font-size: 20px;
+          color: Color();
+        }
       }
     }
 
     .List {
       overflow: auto;
       padding: 10px 0;
+      display: flex;
+      flex-direction: column;
+
+      .last {
+        flex-grow: 1;
+        min-height: 50px;
+      }
     }
 
     .Input {
@@ -132,6 +229,7 @@ $brd-style: 3px solid Color();
   }
 
   .Copy {
+    z-index: 1;
     padding: 5px;
     overflow: auto;
     display: flex;

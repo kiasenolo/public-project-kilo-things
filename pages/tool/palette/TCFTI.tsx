@@ -1,16 +1,38 @@
 import NotAPage from "@/data/components/NotAPage"
 
+
 interface Color {
-  id: string
-  name?: string
-  colors: string[]
+  id: string;
+  souce: string;
+  method?: {
+    type: "normal"
+  } | {
+    type: "blur",
+    size: number
+  } | {
+    type: "tool",
+    toolUse: string
+  } | {
+    type: "other",
+    other: string
+  }
+  name?: string;
+  colors: string[];
 }
 
-const pix = (id: string, indx?: number) => `pixiv-${id}/${indx ?? 0}`
+const pix = (id: string, indx?: number) => {
+  const _: Color = {
+    id: `pixiv-${id} / ${indx ?? 0}`,
+    souce: `https://www.pixiv.net/artworks/${id}`,
+    colors: []
+  }
+
+  return _
+}
 
 export const TCFTI_List: Color[] = [
   {
-    id: pix("104172324"),
+    ...pix("104172324"),
     name: "經典配色",
     colors: [
       "#feeab5",
@@ -32,7 +54,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("92142600"),
+    ...pix("92142600"),
     name: "帶點科技感的淺藍色",
     colors: [
       "#c5caca",
@@ -52,7 +74,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("87377769"),
+    ...pix("87377769"),
     name: "深海裏微微的青綠色（？",
     colors: [
       "#72ada2",
@@ -74,7 +96,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("109556597"),
+    ...pix("109556597"),
     name: "你住在樹裏面的木頭色",
     colors: [
       "#F2ECC1",
@@ -102,7 +124,7 @@ export const TCFTI_List: Color[] = [
   },
   /* Wait For Do */
   {
-    id: pix("100581107"),
+    ...pix("100581107"),
     colors: [
       "#FFFAE7",
       "#DFD8BE",
@@ -135,7 +157,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("94645255", 5),
+    ...pix("94645255", 4),
     colors: [
       "#ADB1CC",
       "#6D6E8A",
@@ -150,7 +172,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("55472736"),
+    ...pix("55472736"),
     colors: [
       "#DFDFDF",
       "#BDBDBD",
@@ -165,7 +187,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("54150558"),
+    ...pix("54150558"),
     colors: [
       "#FEFBAC",
       "#FFE6A6",
@@ -180,7 +202,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("134132348"),
+    ...pix("134132348"),
     colors: [
       "#e5e9e8",
       "#dbcec8",
@@ -204,7 +226,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("134132348"),
+    ...pix("134132348"),
     colors: [
       "#d6d3b6",
       "#f5eebf",
@@ -253,7 +275,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("131107165"),
+    ...pix("131107165"),
     colors: [
       "#2b3e38",
       "#21322f",
@@ -284,7 +306,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("131938718"),
+    ...pix("131938718"),
     colors: [
       "#13092c",
       "#221937",
@@ -308,7 +330,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("133015350"),
+    ...pix("133015350"),
     colors: [
       "#b5a1a5",
       "#b3a0a2",
@@ -342,7 +364,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("131424995"),
+    ...pix("131424995"),
     colors: [
       "#d7e5e5",
       "#becdce",
@@ -379,7 +401,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("129883212"),
+    ...pix("129883212"),
     colors: [
       "#929694",
       "#7b7b87",
@@ -409,7 +431,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("127843306", 2),
+    ...pix("127843306", 2),
     colors: [
       "#843531",
       "#6f252b",
@@ -443,7 +465,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("123406009"),
+    ...pix("123406009", 1),
     colors: [
       "#d3d56d",
       "#d3d770",
@@ -496,7 +518,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("123071304"),
+    ...pix("123071304"),
     colors: [
       "#11283f",
       "#273947",
@@ -524,7 +546,7 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("109187285"),
+    ...pix("109187285"),
     colors: [
       "#4c545d",
       "#69737c",
@@ -569,36 +591,170 @@ export const TCFTI_List: Color[] = [
     ]
   },
   {
-    id: pix("109187285"),
+    ...pix("127896182"),
     colors: [
-      "#20313b",
-      "#293b45",
-      "#364950",
-      "#3d4e55",
-      "#4c5759",
-      "#555a59",
-      "#6f6a63",
-      "#7e7063",
-      "#9a826c",
-      "#a08c71",
-      "#c6a57d",
-      "#c8bf99",
-      "#b3b7c0",
-      "#959da8",
-      "#646e7a",
-      "#576172",
-      "#3a4351",
-      "#cdc7c7",
-      "#b0b0b1",
-      "#8f969e",
-      "#5d6773",
-      "#635f66",
-      "#4a424d",
-      "#3e3842",
-      "#302e3a",
-      "#20202a",
-      "#1d1e20",
-      "#151517"
+      "#f6f6f6",
+      "#e3e3e3",
+      "#c7c5c6",
+      "#9d9d9f",
+      "#77777f",
+      "#91b6d1",
+      "#8dabc5",
+      "#7d98b2",
+      "#5a7591",
+      "#4d6581",
+      "#3b536f",
+      "#34465e",
+      "#2a3b4f",
+      "#253242",
+      "#1a2430",
+      "#c99c75",
+      "#896b50",
+      "#7d5d4b",
+      "#59453a",
+      "#3a312c",
+      "#a4f7ff",
+      "#71d2e2",
+      "#5db2c6",
+      "#5799a9",
+      "#4f7783",
+      "#334954",
+      "#6718ff",
+      "#7214ff",
+      "#4513fc",
+      "#35129f",
+      "#270c4f",
+      "#e052cd",
+      "#be60bc",
+      "#a364a7",
+      "#816a8f",
+      "#726873",
+      "#736b70",
+      "#565151",
+      "#524c4c",
+      "#f623d4",
+      "#d12acd",
+      "#76259f",
+      "#651c7f",
+      "#812a8f",
+      "#8f289c",
+      "#be23b7",
+      "#7f8a90",
+      "#6e777e",
+      "#687178",
+      "#5d666f",
+      "#4b555e",
+      "#3e454e",
+      "#394048",
+      "#242b33",
+      "#d5dfe8",
+      "#b0c7cf",
+      "#85aab7",
+      "#7aa1b0",
+      "#5d8295",
+      "#547388",
+      "#47627d",
+      "#3a526a",
+      "#354660",
+      "#303c56",
+      "#b7b8ba",
+      "#969799",
+      "#787c7d",
+      "#65696a",
+      "#5d6162",
+      "#3e484a",
+      "#3a4245",
+      "#36393e",
+      "#2c2f34"
+    ]
+  },
+  {
+    ...pix("123589412"),
+    method: {
+      type: "blur",
+      size: 50
+    },
+    colors: [
+      "#da2f43",
+      "#dd2f47",
+      "#d74a66",
+      "#c94969",
+      "#cd4f72",
+      "#de5a86",
+      "#b9537a",
+      "#be6080",
+      "#c97397",
+      "#b86a8e",
+      "#a06588",
+      "#7f5f7e",
+      "#7c6784",
+      "#736386",
+      "#71678e",
+      "#706d97",
+      "#66739b",
+      "#525b7d",
+      "#464662",
+      "#32365b",
+      "#392e4b",
+      "#4b546e",
+      "#40475f",
+      "#34384c",
+      "#303144",
+      "#2f2b3a",
+      "#b4516b",
+      "#953c4b",
+      "#6b2832",
+      "#491a22"
+    ]
+  },
+  {
+    ...pix("123469216"),
+    colors: [
+      "#393c41",
+      "#424a57",
+      "#43505d",
+      "#485563",
+      "#555e6d",
+      "#68707d",
+      "#858591",
+      "#a69eab",
+      "#c6bbc1",
+      "#e0d7da",
+      "#bfb8c0",
+      "#cb2f33",
+      "#aa3337",
+      "#853840",
+      "#964855",
+      "#bb4f5e",
+      "#d34555",
+      "#e94b5a",
+      "#4c6b8a",
+      "#527392",
+      "#5b85a3",
+      "#71a8bf",
+      "#9dcbde",
+      "#d8f5fe",
+      "#dedede",
+      "#fafafa",
+      "#b3b3b3",
+      "#929395",
+      "#686868",
+      "#626262",
+      "#4a4a4a",
+      "#393939",
+      "#262626",
+      "#a056b3",
+      "#864e99",
+      "#6b4e84",
+      "#4b4c72",
+      "#324361",
+      "#cc72e0",
+      "#a360c7",
+      "#9961c4",
+      "#735093",
+      "#67557f",
+      "#58496b",
+      "#4f425c"
     ]
   }
 ]
