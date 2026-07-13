@@ -5,7 +5,6 @@ import rehypeRaw from "rehype-raw";
 import { sha256 } from 'js-sha256';
 import { Options } from 'react-markdown';
 import { ReactNode } from 'react';
-import SyntaxHighlighter from 'react-syntax-highlighter';
 
 const titleId = (lev?: number, children?: ReactNode | ReactNode[] | null,) => {
   return `${lev}-${sha256(functions.toBase64(children as string))}`
