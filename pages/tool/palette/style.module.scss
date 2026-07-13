@@ -2,10 +2,15 @@
 
 $brd-style: 3px solid Color();
 
+
 #Frame {
   @include GridFrame();
   @include FullDiv();
   overflow: hidden;
+
+  input {
+    font-family: hack-nerd-font;
+  }
 
   * {
     user-select: none;
@@ -122,6 +127,11 @@ $brd-style: 3px solid Color();
 
   .colorBar {
     @include GridFrame();
+
+    *,
+    & {
+      transition: all DefaultTransition(), background-color .1s, border-color .1s, fill .1s;
+    }
 
     .clr {
       z-index: 1;
