@@ -252,6 +252,11 @@ export default {
   },
   htmlElement,
   str: {
+    arrToStr: (str: string | string[], join?: string) => {
+      if (typeof str === "object") {
+        return str.join(join ?? "\n");
+      } return str
+    },
     capitalizeWords: (str: string) => {
       return str.toLowerCase().replace(/\b[a-z]/g, function (letter) {
         return letter.toUpperCase();
