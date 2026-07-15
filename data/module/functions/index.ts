@@ -267,6 +267,28 @@ export default {
     },
     mulitStartWith: function (fixs: string[], target: string) { return this.mulit_with("start", fixs, target) },
     mulitEndWith: function (fixs: string[], target: string) { return this.mulit_with("end", fixs, target) },
+    splitTextByLength: function (text: string, maxLength: number) {
+      if (!text || maxLength <= 0) return [];
+      const result = [];
+      for (let i = 0; i < text.length; i += maxLength) {
+        result.push(text.slice(i, i + maxLength));
+      }
+      return result;
+    },
+  },
+  arrayFileNameShot: function (a: string, b: string) {
+    return a.localeCompare(b, undefined, {
+      numeric: true,
+      sensitivity: 'base'
+    });
+  },
+  shuffleArray: function <T>(arr: T[]): T[] {
+    const array = [...arr]
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
   },
   fs
 }

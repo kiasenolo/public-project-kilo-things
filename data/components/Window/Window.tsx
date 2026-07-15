@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { JSX, useEffect, useMemo, useRef, useState } from "react";
 import style from "./style.module.scss";
 import { WindowManager, SnapPosition } from "./WindowManager";
 
@@ -28,6 +28,9 @@ export type WindowProps = {
     canResize?: boolean;
     canClose?: boolean;
   };
+  onMinimize?: () => void;
+  onMaximize?: () => void;
+  onRestore?: () => void;
 };
 
 export default function Window({
@@ -44,6 +47,9 @@ export default function Window({
   minHeight = 400,
   maxWidth,
   maxHeight,
+  onMinimize,
+  onMaximize,
+  onRestore,
 }: WindowProps) {
   const {
     canMinimize = true,
@@ -76,18 +82,22 @@ export default function Window({
 
   const lastSyncedRect = useRef(rect);
 
+  const prevIsMinimized = useRef(false);
+  const prevIsMaximized = useRef(false);
+
   const stateRef = useRef({
     isMaximized,
     isMinimized,
     canResize,
+    canMaximize,
     isSnapped,
   });
 
   const constraintsRef = useRef({ minWidth, minHeight, maxWidth, maxHeight });
 
   useEffect(() => {
-    stateRef.current = { isMaximized, isMinimized, canResize, isSnapped };
-  }, [isMaximized, isMinimized, canResize, isSnapped]);
+    stateRef.current = { isMaximized, isMinimized, canResize, canMaximize, isSnapped };
+  }, [isMaximized, isMinimized, canResize, canMaximize, isSnapped]);
 
   useEffect(() => {
     constraintsRef.current = { minWidth, minHeight, maxWidth, maxHeight };
@@ -132,12 +142,28 @@ export default function Window({
       const self: any = (manager as any)._lookupWindow?.(windowId)
         ?? windows.find((w) => w.id === windowId);
       if (self) {
+        const wasMinimized = prevIsMinimized.current;
+        const wasMaximized = prevIsMaximized.current;
+
         setZIndex(self.zIndex);
         setFocused(self.focused);
         setIsClosing(self.isClosing ?? false);
         setIsMinimized(self.isMinimized);
         setIsMaximized(self.isMaximized);
         setIsSnapped(self.isSnapped ?? false);
+
+        if (!wasMinimized && self.isMinimized) {
+          onMinimize?.();
+        }
+        if (!wasMaximized && self.isMaximized) {
+          onMaximize?.();
+        }
+        if ((wasMinimized && !self.isMinimized) || (wasMaximized && !self.isMaximized)) {
+          onRestore?.();
+        }
+
+        prevIsMinimized.current = self.isMinimized;
+        prevIsMaximized.current = self.isMaximized;
       }
     });
     return () => unsubscribe();
@@ -317,14 +343,28 @@ export default function Window({
         };
 
         const EDGE = 5;
+        const currentCanResize = stateRef.current.canResize;
+        const currentCanMaximize = stateRef.current.canMaximize;
+
+        const isSnapSizeAllowed = (position: SnapPosition): boolean => {
+          const { minWidth: minW, minHeight: minH, maxWidth: maxW, maxHeight: maxH } = constraintsRef.current;
+          const snapW = position === "top" ? cw : cw * 0.5;
+          const snapH = (position === "top" || position === "left" || position === "right") ? ch : ch * 0.5;
+          if (minW !== undefined && snapW < minW) return false;
+          if (maxW !== undefined && snapW > maxW) return false;
+          if (minH !== undefined && snapH < minH) return false;
+          if (maxH !== undefined && snapH > maxH) return false;
+          return true;
+        };
+
         let newSnapPosition: SnapPosition | null = null;
-        if (localY <= EDGE && localX <= EDGE) newSnapPosition = "top-left";
-        else if (localY >= ch - EDGE && localX <= EDGE) newSnapPosition = "bottom-left";
-        else if (localY <= EDGE && localX >= cw - EDGE) newSnapPosition = "top-right";
-        else if (localY >= ch - EDGE && localX >= cw - EDGE) newSnapPosition = "bottom-right";
-        else if (localY <= EDGE) newSnapPosition = "top";
-        else if (localX <= EDGE) newSnapPosition = "left";
-        else if (localX >= cw - EDGE) newSnapPosition = "right";
+        if (currentCanResize && isSnapSizeAllowed("top-left") && localY <= EDGE && localX <= EDGE) newSnapPosition = "top-left";
+        else if (currentCanResize && isSnapSizeAllowed("bottom-left") && localY >= ch - EDGE && localX <= EDGE) newSnapPosition = "bottom-left";
+        else if (currentCanResize && isSnapSizeAllowed("top-right") && localY <= EDGE && localX >= cw - EDGE) newSnapPosition = "top-right";
+        else if (currentCanResize && isSnapSizeAllowed("bottom-right") && localY >= ch - EDGE && localX >= cw - EDGE) newSnapPosition = "bottom-right";
+        else if (currentCanMaximize && isSnapSizeAllowed("top") && localY <= EDGE) newSnapPosition = "top";
+        else if (currentCanResize && isSnapSizeAllowed("left") && localX <= EDGE) newSnapPosition = "left";
+        else if (currentCanResize && isSnapSizeAllowed("right") && localX >= cw - EDGE) newSnapPosition = "right";
 
         if (newSnapPosition !== currentSnapPosition) {
           currentSnapPosition = newSnapPosition;
@@ -629,17 +669,64 @@ export default function Window({
       }
     };
 
-    document.addEventListener("blur", altCancel);
-    document.addEventListener("focus", altCancel);
+    window.addEventListener("blur", altCancel);
+    window.addEventListener("focus", altCancel);
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     return () => {
-      document.removeEventListener("blur", altCancel);
-      document.removeEventListener("focus", altCancel);
+      window.removeEventListener("blur", altCancel);
+      window.removeEventListener("focus", altCancel);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
+
+  const actionBtns = useMemo(() => {
+    type btn = {
+      icon: JSX.Element,
+      action: () => void
+    }
+
+    const list: btn[] = []
+
+    if (canClose) {
+      list.push({
+        icon: (<svg width="28.28" height="28.28" viewBox="0 0 28.28 28.28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g>
+            <path d="M0 0L14.1421 14.1421" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(7 7)" />
+            <path d="M0 14.1421L14.1421 0" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(7 7)" />
+          </g>
+        </svg>),
+        action: handleClose
+      })
+    }
+
+    if (canMaximize) {
+      list.push({
+        icon: (isMaximized ? (
+          <svg width="22" height="6" viewBox="0 0 22 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0L10 4L20 0" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(1 1)" />
+          </svg>
+        ) : (
+          <svg width="22" height="6" viewBox="0 0 22 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 4L10 0L20 4" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(1 1)" />
+          </svg>
+        )),
+        action: handleMaximize
+      })
+    }
+
+    if (canMinimize) {
+      list.push({
+        icon: (<svg width="22" height="3" viewBox="0 0 22 3" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 0L20 0" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(1 1)" />
+        </svg>),
+        action: handleMinimize
+      })
+    }
+
+    return list;
+  }, [canMinimize, canMaximize, canClose, isMaximized])
 
   return (
     <div
@@ -654,51 +741,25 @@ export default function Window({
         isMinimized ? style["minimize"] : "",
         nonTransparens ? style["nonTransparens"] : "",
       ].join(" ")}
-      style={{ zIndex, touchAction: "none" }}
+      style={{
+        zIndex,
+        touchAction: "none",
+        minWidth,
+        minHeight,
+        maxWidth,
+        maxHeight,
+      }}
     >
       <div className={style["title"]}>
         <span className={style["text"]}>{title}</span>
         <span className={style["btns"]}>
-          <div className={style["DropArea"]} ref={handleRef} onDoubleClick={handleMaximize}></div>
-          {canMinimize && (
-            <div className={style["min"]} onClick={handleMinimize}>
-              <div className={style["icon"]}>
-                <svg width="22" height="3" viewBox="0 0 22 3" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 0L20 0" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(1 1)" />
-                </svg>
-              </div>
-              <div className={style["bg"]} />
+          <div className={style["DropArea"]} ref={handleRef} onDoubleClick={canMaximize ? handleMaximize : () => { }}></div>
+          {actionBtns.map((btn, i) => <div className={style["btn" + (i + 1)]} onClick={btn.action}>
+            <div className={style["icon"]}>
+              {btn.icon}
             </div>
-          )}
-          {canMaximize && (
-            <div className={style["res"]} onClick={handleMaximize}>
-              <div className={style["icon"]}>
-                {isMaximized ? (
-                  <svg width="22" height="6" viewBox="0 0 22 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0L10 4L20 0" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(1 1)" />
-                  </svg>
-                ) : (
-                  <svg width="22" height="6" viewBox="0 0 22 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 4L10 0L20 4" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(1 1)" />
-                  </svg>
-                )}
-              </div>
-              <div className={style["bg"]} />
-            </div>
-          )}
-          {canClose && (
-            <div className={style["cls"]} onClick={handleClose}>
-              <div className={style["icon"]}>
-                <svg width="28.28" height="28.28" viewBox="0 0 28.28 28.28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g>
-                    <path d="M0 0L14.1421 14.1421" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(7 7)" />
-                    <path d="M0 14.1421L14.1421 0" fill="none" strokeWidth="2" strokeLinecap="round" transform="translate(7 7)" />
-                  </g>
-                </svg>
-              </div>
-              <div className={style["bg"]} />
-            </div>
-          )}
+            <div className={style["bg"]} />
+          </div>).reverse()}
         </span>
       </div>
 
@@ -714,6 +775,7 @@ export default function Window({
                 data-resize-type="alt"
                 className={`${style["handle"]} ${style[d]}`}
                 style={{ gridArea: d }}
+                onContextMenu={e => e.preventDefault()}
               />
             ))}
           </div>

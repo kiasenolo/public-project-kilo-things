@@ -48,10 +48,6 @@
       $offset : 20px;
       $skew: 30deg;
 
-      $c : Color();
-      $r : Color(.8);
-      $m : Color(.6);
-
       display: flex;
       align-items: stretch;
       justify-content: flex-end;
@@ -84,52 +80,42 @@
         }
 
         &:hover {
-          filter: saturate(1.2);
+          background-color: Color();
 
           *,
           & {
+            stroke: #000;
             transition: none;
-          }
-
-          >.bg {
-            opacity: .3;
           }
         }
       }
 
-      .cls {
+      .btn1 {
         width: $width + $offset;
 
         >.icon {
           z-index: 2;
           transform: skewX(-$skew) translateX(calc(-1 * $offset / 2));
-          stroke: $c;
-        }
-
-        >.bg {
-          background-color: $c;
         }
       }
 
-      .res {
-        >.icon {
-          stroke: $r;
-        }
+      @mixin btn($indx, $clr) {
+        .btn#{$indx} {
+          >.icon {
+            stroke: $clr;
+          }
 
-        >.bg {
-          background-color: $r;
+          >.bg {
+            background-color: $clr;
+          }
         }
       }
 
-      .min {
-        >.icon {
-          stroke: $m;
-        }
 
-        >.bg {
-          background-color: $m;
-        }
-      }
+      @include btn(1, Color());
+      @include btn(2, Color(.8));
+      @include btn(3, Color(.6));
+      @include btn(4, Color(.5));
     }
   }
 
@@ -176,7 +162,11 @@
       left: 4px;
       right: 4px;
       height: $size;
-      cursor: ns-resize;
+      cursor: Cursor(ns-resize);
+
+      &:active {
+        cursor: Cursor(ns-resize, act);
+      }
     }
 
     &.n {
@@ -192,7 +182,11 @@
       top: 4px;
       bottom: 4px;
       width: $size;
-      cursor: ew-resize;
+      cursor: Cursor(ew-resize);
+
+      &:active {
+        cursor: Cursor(ew-resize, act);
+      }
     }
 
     &.e {
@@ -215,25 +209,41 @@
     &.ne {
       top: $ofs;
       right: $ofs;
-      cursor: nesw-resize;
+      cursor: Cursor(nesw-resize);
+
+      &:active {
+        cursor: Cursor(nesw-resize, act);
+      }
     }
 
     &.nw {
       top: $ofs;
       left: $ofs;
-      cursor: nwse-resize;
+      cursor: Cursor(nwse-resize);
+
+      &:active {
+        cursor: Cursor(nwse-resize, act);
+      }
     }
 
     &.se {
       bottom: $ofs;
       right: $ofs;
-      cursor: nwse-resize;
+      cursor: Cursor(nwse-resize);
+
+      &:active {
+        cursor: Cursor(nwse-resize, act);
+      }
     }
 
     &.sw {
       bottom: $ofs;
       left: $ofs;
-      cursor: nesw-resize;
+      cursor: Cursor(nesw-resize);
+
+      &:active {
+        cursor: Cursor(nesw-resize, act);
+      }
     }
   }
 
